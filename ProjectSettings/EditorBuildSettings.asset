@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 0
+    path: Assets/Scenes/SampleScene.unity
+    guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/FarmGameScenes/Scene0-Intro.unity
+    guid: 87675ff67604cb245b171c4e244b865d
+  - enabled: 1
+    path: Assets/FarmGameScenes/Scene1-FarmingSim.unity
+    guid: 41d11b3e808637146bdb5d091529cae0
+  - enabled: 1
+    path: Assets/FarmGameScenes/Scene2-Shop.unity
+    guid: 49a07545e77a5a44f883f4e26d0bfcf9
+  - enabled: 1
+    path: Assets/FarmGameScenes/Scene3-Crop Sim.unity
+    guid: 7da63708937475c40bf7c5c6e80204d9
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
