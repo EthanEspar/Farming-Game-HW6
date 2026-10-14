@@ -116,17 +116,33 @@ public class plantManager : MonoBehaviour
             return;
         }
 
-        // ensure there's no existing plant on this tile
-        Plant[] existing = FindObjectsOfType<Plant>();
-        foreach (var p in existing)
+       // Check whether this tile already has a plant.
+        Plant[] existing = FindObjectsByType<Plant>(FindObjectsSortMode.None);
+
+        foreach (Plant plant in existing)
         {
-            if (p != null && p.plantedTile == curTile)
+        if (plant != null && plant.plantedTile == curTile)
+        {
+            if (!plant.IsMature)
             {
-                Debug.Log("A plant already exists on this tile.");
+                Debug.Log("The plant is not ready to harvest.");
                 return;
             }
-        }
 
+            if (FarmFund.Instance == null)
+            {
+                Debug.LogError("Farm Fund is missing.");
+                return;
+            }
+
+            FarmFund.Instance.AddHarvestedPlant();
+
+            Debug.Log("Plant harvested! Total harvested: " +FarmFund.Instance.HarvestedPlants
+        );
+        Destroy(plant.gameObject);
+        return;
+        }
+    }
         // ensure player has seeds
         if (seedCounter != null)
         {

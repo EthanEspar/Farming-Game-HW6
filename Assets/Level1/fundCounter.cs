@@ -22,14 +22,15 @@ public class fundCounter : MonoBehaviour
     [Tooltip("Funds value to set when all tiles are watered")]
     public int fundsWhenAllWatered = 10;
 
-    private int currentFunds;
+    //private int currentFunds;
     private bool rewardGiven = false;
 
     private FarmTileControl[] farmTiles;
 
+    [System.Obsolete]
     void Start()
     {
-        currentFunds = startingFunds;
+        //currentFunds = startingFunds;
         UpdateFundsUI();
 
         // hide completion button initially if provided
@@ -40,6 +41,7 @@ public class fundCounter : MonoBehaviour
         farmTiles = FindObjectsOfType<FarmTileControl>();
     }
 
+    [System.Obsolete]
     void Update()
     {
         if (rewardGiven) return; // already set
@@ -68,7 +70,12 @@ public class fundCounter : MonoBehaviour
 
         if (allWatered)
         {
-            currentFunds = fundsWhenAllWatered;
+            //currentFunds = fundsWhenAllWatered;
+            //new logic
+            if (FarmFund.Instance != null)
+            {
+                FarmFund.Instance.AddMoney(fundsWhenAllWatered);
+            }
             UpdateFundsUI();
             // update level complete text (do not change active state)
             if (levelCompleteText != null)
@@ -86,13 +93,9 @@ public class fundCounter : MonoBehaviour
 
     private void UpdateFundsUI()
     {
-        if (fundsText != null)
+        if (fundsText != null && FarmFund.Instance != null)
         {
-            fundsText.text = currentFunds.ToString();
-        }
-        else
-        {
-            Debug.Log("fundCounter: fundsText is not assigned. Current funds: " + currentFunds);
+            fundsText.text = FarmFund.Instance.Money.ToString();
         }
     }
 }
