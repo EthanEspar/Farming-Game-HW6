@@ -21,6 +21,14 @@ public class Plant : MonoBehaviour
     public GameObject plantedTile;
 
     private int daysPassedSincePlanting = 0;
+    public bool IsMature
+    {
+        get
+        {
+            return daysPassedSincePlanting >= daysToLarge;
+        }
+    }
+
     private DayNightControl dayNightControl;
 
     void Awake()

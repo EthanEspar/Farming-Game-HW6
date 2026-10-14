@@ -2,108 +2,165 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
-// Simple manager for seeds and money display in Scene2.
-// - seeds start at 0, money starts at 10
-// - calling BuySeed() increments seeds and decrements money
-// - on the first successful purchase an extra button is shown
-// - when money is 0 the buy button becomes non-interactable and purchases are blocked
 public class SeedsMoneyScene2 : MonoBehaviour
 {
-    [Tooltip("TextMeshProUGUI that displays the current seeds count")]
     public TextMeshProUGUI seedsText;
-
-    [Tooltip("TextMeshProUGUI that displays the current money count")]
     public TextMeshProUGUI moneyText;
-
-    [Tooltip("The UI Button the player presses to buy a seed")]
     public Button buyButton;
-
-    [Tooltip("Optional: another button (or UI GameObject) that appears after the first purchase")]
     public GameObject firstPurchaseButton;
+    public TMP_InputField quantityInput;
+    public TextMeshProUGUI priceText;
 
-    [Tooltip("Starting number of seeds")]
-    public int startingSeeds = 0;
-    [Tooltip("Starting money")]
-    public int startingMoney = 10;
-    [Tooltip("Cost in money for one seed purchase")]
+    public Button sellButton;
+    public TextMeshProUGUI harvestedText;
+
     public int seedCost = 2;
+    public int cropSellPrice = 5;
 
-    private int seeds;
-    private int money;
-    private bool firstPurchaseDone = false;
-
-    void Start()
+    private void Start()
     {
-        seeds = Mathf.Max(0, startingSeeds);
-        money = Mathf.Max(0, startingMoney);
-
-        if (firstPurchaseButton != null)
-            firstPurchaseButton.SetActive(false);
-
-        UpdateUI();
-        UpdateBuyButtonState();
-
-        // auto-hook the buy button if it's assigned but not wired in the Inspector
-        if (buyButton != null)
+        if (FarmFund.Instance == null)
         {
-            // ensure our method is subscribed (avoid duplicate subscriptions)
-            buyButton.onClick.RemoveListener(BuySeed);
-            buyButton.onClick.AddListener(BuySeed);
-        }
-    }
-
-    // Called by the buy button OnClick
-    public void BuySeed()
-    {
-        Debug.Log("SeedsMoneyScene2: BuySeed called. Money=" + money + " Seeds=" + seeds);
-        // ensure there is enough money to buy
-        if (money < seedCost)
-        {
-            Debug.Log("SeedsMoneyScene2: Not enough money to buy a seed.");
-            UpdateBuyButtonState();
+            Debug.LogError(
+                "Farm Fund is missing. Start from Scene 1."
+            );
             return;
         }
 
-        // perform transaction
-        seeds += 1;
-        money -= seedCost;
-
-        // on first purchase, reveal the other button
-        if (!firstPurchaseDone && firstPurchaseButton != null)
+        if (buyButton != null)
         {
-            firstPurchaseButton.SetActive(true);
-            firstPurchaseDone = true;
+            buyButton.onClick.RemoveListener(BuySeed);
+            buyButton.onClick.AddListener(BuySeed);
+        }
+
+        if (sellButton != null)
+        {
+            sellButton.onClick.RemoveListener(SellHarvestedPlants);
+            sellButton.onClick.AddListener(SellHarvestedPlants);
+        }
+
+        if (quantityInput != null &&
+            string.IsNullOrWhiteSpace(quantityInput.text))
+        {
+            quantityInput.text = "1";
+        }
+
+        if (firstPurchaseButton != null)
+        {
+            firstPurchaseButton.SetActive(
+                FarmFund.Instance.Seeds > 0
+            );
         }
 
         UpdateUI();
-        UpdateBuyButtonState();
+    }
+
+    public void BuySeed()
+    {
+        if (FarmFund.Instance == null)
+            return;
+
+        if (quantityInput == null)
+        {
+            Debug.LogError("Quantity Input is not assigned.");
+            return;
+        }
+
+        int quantity;
+
+        if (!int.TryParse(quantityInput.text, out quantity) ||
+            quantity < 1)
+        {
+            Debug.Log("Enter a valid seed quantity.");
+            return;
+        }
+
+        int totalPrice = quantity * seedCost;
+
+        if (FarmFund.Instance.TrySpendMoney(totalPrice))
+        {
+            FarmFund.Instance.AddSeeds(quantity);
+
+            if (firstPurchaseButton != null)
+            {
+                firstPurchaseButton.SetActive(true);
+            }
+
+            Debug.Log(
+                "Bought " + quantity +
+                " seeds for $" + totalPrice
+            );
+        }
+        else
+        {
+            Debug.Log("Not enough money.");
+        }
+
+        UpdateUI();
+    }
+
+    public void SellHarvestedPlants()
+    {
+        if (FarmFund.Instance == null)
+            return;
+
+        int amountSold = FarmFund.Instance.HarvestedPlants;
+
+        if (amountSold <= 0)
+        {
+            Debug.Log("There are no harvested plants to sell.");
+            return;
+        }
+
+        FarmFund.Instance.SellHarvestedPlants(cropSellPrice);
+
+        Debug.Log(
+            "Sold " + amountSold +
+            " plants for $" +
+            (amountSold * cropSellPrice)
+        );
+
+        UpdateUI();
     }
 
     private void UpdateUI()
     {
+        if (FarmFund.Instance == null)
+            return;
+
         if (seedsText != null)
-            seedsText.text = seeds.ToString();
+        {
+            seedsText.text = FarmFund.Instance.Seeds.ToString();
+        }
+
         if (moneyText != null)
-            moneyText.text = money.ToString();
-    }
+        {
+            moneyText.text = FarmFund.Instance.Money.ToString();
+        }
 
-    private void UpdateBuyButtonState()
-    {
+        if (priceText != null)
+        {
+            priceText.text = "Seeds: $" + seedCost + " each";
+        }
+
+        if (harvestedText != null)
+        {
+            harvestedText.text =
+                "Harvested: " +
+                FarmFund.Instance.HarvestedPlants;
+        }
+
         if (buyButton != null)
-            buyButton.interactable = (money >= seedCost);
-    }
+        {
+            buyButton.interactable =
+                FarmFund.Instance.Money >= seedCost;
+        }
 
-    // Optional: allow other systems to add money or seeds
-    public void AddMoney(int amount)
-    {
-        money = Mathf.Max(0, money + amount);
-        UpdateUI();
-        UpdateBuyButtonState();
-    }
-
-    public void AddSeeds(int amount)
-    {
-        seeds = Mathf.Max(0, seeds + amount);
-        UpdateUI();
+        if (sellButton != null)
+        {
+            sellButton.gameObject.SetActive(
+                FarmFund.Instance.HarvestedPlants > 0
+            );
+        }
     }
 }
