@@ -23,6 +23,8 @@ public class ToolInteractions : MonoBehaviour
 
     private PlayerInteractPoint playerInteractPoint;
     private InputAction interactEAction;
+    [SerializeField]
+    private Animator playerAnimator;
 
     private GameObject lastInteractedTile;
     private Coroutine hideCoroutine;
@@ -37,6 +39,40 @@ public class ToolInteractions : MonoBehaviour
         {
             playerInteractPoint.AfterTileInteracted += OnAfterTileInteracted;
             Debug.Log("ToolInteractions: subscribed to PlayerInteractPoint.AfterTileInteracted");
+            // try to get the player's animator so we can trigger interaction animations
+            if (playerAnimator == null && playerInteractPoint != null)
+            {
+                playerAnimator = playerInteractPoint.GetComponentInChildren<Animator>();
+                if (playerAnimator != null) Debug.Log("ToolInteractions: found player Animator via PlayerInteractPoint -> " + playerAnimator.gameObject.name);
+            }
+            // fallback: try PlayerMovement
+            if (playerAnimator == null)
+            {
+                var pm = FindObjectOfType<PlayerMovement>();
+                if (pm != null)
+                {
+                    playerAnimator = pm.GetComponentInChildren<Animator>();
+                    if (playerAnimator != null) Debug.Log("ToolInteractions: found player Animator via PlayerMovement -> " + playerAnimator.gameObject.name);
+                }
+            }
+            // final fallback: inspect all Animators in scene and pick one that looks like a player
+            if (playerAnimator == null)
+            {
+                var all = FindObjectsOfType<Animator>();
+                Debug.Log("ToolInteractions: searching all animators, count=" + all.Length);
+                foreach (var a in all)
+                {
+                    Debug.Log("ToolInteractions: animator candidate: " + a.gameObject.name);
+                    if (a.gameObject.name.ToLower().Contains("player") || a.gameObject.name.ToLower().Contains("character") || a.gameObject.name.ToLower().Contains("peasant"))
+                    {
+                        playerAnimator = a;
+                        Debug.Log("ToolInteractions: selected animator candidate -> " + a.gameObject.name);
+                        break;
+                    }
+                }
+                if (playerAnimator == null && all.Length == 1) { playerAnimator = all[0]; Debug.Log("ToolInteractions: selected sole animator -> " + playerAnimator.gameObject.name); }
+            }
+            if (playerAnimator == null) Debug.LogWarning("ToolInteractions: no player Animator found; assign playerAnimator in the inspector to enable interaction animations.");
         }
         else
         {
@@ -126,6 +162,20 @@ public class ToolInteractions : MonoBehaviour
 
         if (hideCoroutine != null) { StopCoroutine(hideCoroutine); hideCoroutine = null; }
         hideCoroutine = StartCoroutine(HideAfterDelay());
+
+        // trigger player interaction animation if available
+        try
+        {
+            if (playerAnimator != null)
+            {
+                playerAnimator.SetTrigger("InteractTrigger");
+                Debug.Log("ToolInteractions: fired InteractTrigger on player animator");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning("ToolInteractions: failed to set InteractTrigger on player animator: " + ex.Message);
+        }
     }
 
     // Called by plantManager or FarmFund when a mature plant is harvested
@@ -135,6 +185,20 @@ public class ToolInteractions : MonoBehaviour
         SetToolVisibility(false, false, true);
         if (hideCoroutine != null) { StopCoroutine(hideCoroutine); hideCoroutine = null; }
         hideCoroutine = StartCoroutine(HideAfterDelay());
+
+        // also trigger animation on harvest
+        try
+        {
+            if (playerAnimator != null)
+            {
+                playerAnimator.SetTrigger("InteractTrigger");
+                Debug.Log("ToolInteractions: fired InteractTrigger on player animator (harvest)");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning("ToolInteractions: failed to set InteractTrigger on player animator during harvest: " + ex.Message);
+        }
     }
 
     private void OnInteractEPerformed(UnityEngine.InputSystem.InputAction.CallbackContext ctx)

@@ -11,6 +11,8 @@ public class PlayerInteractPoint:MonoBehaviour
 
     private bool curInteractionTriggered= false;//each space press might trigger multiple times across multiple frames
     private StaminaBarScript stamina;
+    [SerializeField]
+    private Animator animator;
 
     [Tooltip("Minimum time between interactions in seconds to avoid double-triggering")]
     public float interactionDebounce = 0.25f;
@@ -25,6 +27,9 @@ public class PlayerInteractPoint:MonoBehaviour
 
         // find stamina manager in scene
         stamina = FindObjectOfType<StaminaBarScript>();
+        // try to find an Animator on the player (or its children) to trigger interaction animations
+        if (animator == null) animator = GetComponentInChildren<Animator>();
+        if (animator != null) Debug.Log("PlayerInteractPoint: found Animator -> " + animator.gameObject.name);
     }
 
     // Event invoked after a tile has been interacted with and its state updated
@@ -69,6 +74,31 @@ public class PlayerInteractPoint:MonoBehaviour
         tile.InteractWithFarmTile();
         // notify listeners that the interaction finished and the tile state may have changed
         AfterTileInteracted?.Invoke(curTile);
+        // trigger character interaction animation if available
+        try
+        {
+            if (animator != null)
+            {
+                animator.SetTrigger("InteractTrigger");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning("PlayerInteractPoint: failed to set InteractTrigger on animator: " + ex.Message);
+        }
+    }
+
+    private void Update()
+    {
+        // Use the Input System keyboard for legacy key fallbacks (no direct use of UnityEngine.Input)
+        var keyboard = Keyboard.current;
+        if (keyboard != null)
+        {
+            if (keyboard.spaceKey.wasPressedThisFrame)
+                PerformInteraction();
+            if (keyboard.eKey.wasPressedThisFrame)
+                PerformInteraction();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
