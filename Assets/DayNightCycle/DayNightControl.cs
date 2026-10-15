@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro; // Important for TextMeshPro
 using UnityEngine.Events;
+<<<<<<< Updated upstream
 using UnityEngine.InputSystem;
 
 public class DayNightControl : MonoBehaviour
@@ -15,6 +16,11 @@ public class DayNightControl : MonoBehaviour
         Spring, Summer, Fall, Winter
     }
 
+=======
+
+public class DayNightControl : MonoBehaviour
+{
+>>>>>>> Stashed changes
     public Light sunLight; // Assign your directional light in the Inspector
     public float cycleLengthInSeconds = 60f; //time of a whole day, can be adjusted in Unity editor
 
@@ -22,6 +28,7 @@ public class DayNightControl : MonoBehaviour
     private int DaysPassedInGame = 1;
     private float currentTimeOfDay = 0f; // 0 to 1, representing percentage through the day
 
+<<<<<<< Updated upstream
     [Header("Calendar (HW6)")]
     [Tooltip("How many 7-day weeks one season lasts. Set this to 1 while debugging so Winter shows up quickly.")]
     public int weeksPerSeason = 2;
@@ -63,11 +70,22 @@ public class DayNightControl : MonoBehaviour
     void Update()
     {
 
+=======
+    public TMP_Text dayLable;
+
+    //this event gets fired when a day finishes and will let all the other objects that listens to this event know
+    public UnityEvent dayPassedEvent=new UnityEvent();
+
+    void Update()
+    {
+        
+>>>>>>> Stashed changes
         currentTimeOfDay += Time.deltaTime / cycleLengthInSeconds;// adjust a small amount of time per frame
 
         if (currentTimeOfDay >= 1f)
         {
             currentTimeOfDay = 0f; // Reset to start a new day
+<<<<<<< Updated upstream
             AdvanceOneDay();
         }
 
@@ -80,10 +98,21 @@ public class DayNightControl : MonoBehaviour
         }
 
 
+=======
+            DaysPassedInGame++;
+            dayLable.text="Days:  "+DaysPassedInGame.ToString();
+
+            dayPassedEvent.Invoke();//make announcement to all listeners
+        }
+
+        // Calculate sun's rotation based on time of day
+        // 0 degrees for sunrise, 180 for sunset, 360 for next sunrise
+>>>>>>> Stashed changes
         float sunRotationX = Mathf.Lerp(0f, 360f, currentTimeOfDay);
 
         // Apply rotation to the sun light
         sunLight.transform.rotation = Quaternion.Euler(sunRotationX, 0f, 0f);
+<<<<<<< Updated upstream
     }
 
     private void AdvanceOneDay()
@@ -116,10 +145,19 @@ public class DayNightControl : MonoBehaviour
 
     // ---------------- public API for other scripts ----------------
 
+=======
+
+        // Optional: Adjust other elements, like skybox, light source intensity, and so on
+        // sunLight.intensity = 
+        // RenderSettings.fogColor = 
+        // RenderSettings.skybox.SetFloat
+    }
+>>>>>>> Stashed changes
     public int Get_DaysPassedInGame() {
         return DaysPassedInGame;
     }
 
+<<<<<<< Updated upstream
     public WeekDay GetWeekDay()
     {
         return currentWeekDay;
@@ -163,6 +201,10 @@ public class DayNightControl : MonoBehaviour
     //provide API for other objects to add themselves to the listner list
     //objects in this list can receive callback when each day passessss
 
+=======
+    //provide API for other objects to add themselves to the listner list
+    //objects in this list can receive callback when each day passessss
+>>>>>>> Stashed changes
     public void listenToDayPassEvent(GameObject listener)
     {
         //when the day pass event is triggered, the farm tile's ADayPassed() function will be called
