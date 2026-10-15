@@ -20,6 +20,10 @@ public class plantManager : MonoBehaviour
 
     private PlayerInteractPoint playerInteractPoint;
     private seedCounter seedCounter;
+
+    private bool plantingAllowed = true;
+    private DayNightControl dayNightControl;
+    private TimeDisplayUI timeDisplay;
     private Rect spawnMenuRect = new Rect(10, 10, 220, 160);
 
     void Start()
@@ -32,11 +36,31 @@ public class plantManager : MonoBehaviour
         seedCounter = FindObjectOfType<seedCounter>();
         if (seedCounter == null)
             Debug.LogWarning("plantManager: seedCounter not found in scene. Planting won't decrement seeds.");
+
+        // HW6 Task 1: listen to the "new season" event so planting is locked during Winter
+        dayNightControl = GameObject.Find("DayNightController")?.GetComponent<DayNightControl>();
+        if (dayNightControl != null)
+        {
+            dayNightControl.newSeasonEvent.AddListener(OnNewSeason);
+            plantingAllowed = dayNightControl.GetSeason() != DayNightControl.Season.Winter;
+        }
+        timeDisplay = FindAnyObjectByType<TimeDisplayUI>();
+    }
+
+    private void OnNewSeason(DayNightControl.Season newSeason)
+    {
+        plantingAllowed = newSeason != DayNightControl.Season.Winter;
+        Debug.Log("plantManager: season is now " + newSeason + ", planting allowed = " + plantingAllowed);
+    }
+
+    private void OnDestroy()
+    {
+        if (dayNightControl != null)
+            dayNightControl.newSeasonEvent.RemoveListener(OnNewSeason);
     }
 
     void Update()
     {
-        // Use the Input System keyboard instead of the legacy Input class
         var k = Keyboard.current;
         if (k == null) return;
 
@@ -48,8 +72,6 @@ public class plantManager : MonoBehaviour
             TryPlantAtPlayerTile();
         }
     }
-
-    // Draw an on-screen menu in Play mode to tweak spawn offset/height
     void OnGUI()
     {
         if (!Application.isPlaying) return;
@@ -116,7 +138,6 @@ public class plantManager : MonoBehaviour
             return;
         }
 
-       // Check whether this tile already has a plant.
         Plant[] existing = FindObjectsByType<Plant>(FindObjectsSortMode.None);
 
         foreach (Plant plant in existing)
@@ -143,6 +164,13 @@ public class plantManager : MonoBehaviour
         return;
         }
     }
+        if (!plantingAllowed)
+        {
+            Debug.Log("Cannot plant during Winter.");
+            if (timeDisplay != null) timeDisplay.ShowMessage("It's Winter - nothing can be planted until Spring.");
+            return;
+        }
+
         // ensure player has seeds
         if (seedCounter != null)
         {
