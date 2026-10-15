@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class FarmFund : MonoBehaviour
 {
@@ -10,6 +11,8 @@ public class FarmFund : MonoBehaviour
     public int Seeds { get; private set; }
     public int HarvestedPlants { get; private set; }
     public bool HasSpeedUpgrade { get; private set; }
+    // Event invoked when a plant is harvested (HarvestedPlants was incremented)
+    public UnityEvent harvestEvent = new UnityEvent();
 
     private void Awake()
     {
@@ -56,6 +59,7 @@ public class FarmFund : MonoBehaviour
     public void AddHarvestedPlant()
     {
         HarvestedPlants++;
+        harvestEvent.Invoke();
     }
 
     public void SellHarvestedPlants(int pricePerPlant)

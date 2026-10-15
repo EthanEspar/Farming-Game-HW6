@@ -39,7 +39,8 @@ public class ShopUpgradeManager : MonoBehaviour
 
     [Header("Level flow on the Market visit")]
     [Tooltip("Name of the 3rd farming level (Task 4). Must be added to Build Profiles.")]
-    public string nextLevelScene = "Scene4-Farm Level 3";
+    // Ensure this matches the exact scene name in Build Settings
+    public string nextLevelScene = "Scene4-FarmingLevel3";
     [Tooltip("Used if the scene above isn't in Build Profiles yet (so you can still test).")]
     public string fallbackScene = "Scene3-Crop Sim";
 

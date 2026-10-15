@@ -832,7 +832,7 @@ MonoBehaviour:
   instructionsText: {fileID: 2129449974}
   nextLevelButton: {fileID: 1755827296}
   nextLevelButtonLabel: {fileID: 2023072963}
-  nextLevelScene: Scene4-Farm Level 3
+  nextLevelScene: Scene4-FarmingLevel3
   fallbackScene: Scene3-Crop Sim
   testAddMoney: 0
 --- !u!4 &519598791
