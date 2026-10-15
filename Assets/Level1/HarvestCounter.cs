@@ -13,6 +13,8 @@ public class HarvestCounter : MonoBehaviour
 
     private void Start()
     {
+        Debug.Log("HarvestCounter running! Goal = " + harvestGoal);
+
         if (levelCompleteButton != null)
         {
             levelCompleteButton.SetActive(false);
@@ -26,7 +28,10 @@ public class HarvestCounter : MonoBehaviour
         UpdateUI();
 
         if (FarmFund.Instance == null || levelCompleted)
+        {
+            Debug.LogWarning("FarmFund.Instance is NULL!");
             return;
+        }
 
         if (FarmFund.Instance.HarvestedPlants >= harvestGoal)
         {

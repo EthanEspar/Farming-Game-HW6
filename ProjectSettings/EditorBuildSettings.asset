@@ -20,5 +20,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/FarmGameScenes/Scene3-Crop Sim.unity
     guid: 7da63708937475c40bf7c5c6e80204d9
+  - enabled: 1
+    path: Assets/FarmGameScenes/Scene4-FarmingLevel3.unity
+    guid: 707957a3ba235e345939f1846b2b4851
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

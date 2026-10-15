@@ -1,8 +1,5 @@
 using UnityEngine;
 
-// Controls plant growth stages. The prefab should have three child GameObjects:
-// smallModel, midModel, largeModel. Assign them in the Inspector or let the script
-// find the first three children automatically.
 public class Plant : MonoBehaviour
 {
     [Tooltip("Child GameObject representing the small (planted) model")]
@@ -57,6 +54,17 @@ public class Plant : MonoBehaviour
         if (dayNightControl != null)
         {
             dayNightControl.dayPassedEvent.AddListener(OnDayPassed);
+            // HW6 Task 1: also listen to the "new season" event
+            dayNightControl.newSeasonEvent.AddListener(OnNewSeason);
+        }
+    }
+
+    private void OnNewSeason(DayNightControl.Season newSeason)
+    {
+        if (newSeason == DayNightControl.Season.Winter && plantedTile != null)
+        {
+            Debug.Log("Winter arrived - removing plant on " + plantedTile.name);
+            Destroy(gameObject);
         }
     }
 
@@ -103,6 +111,9 @@ public class Plant : MonoBehaviour
     private void OnDestroy()
     {
         if (dayNightControl != null)
+        {
             dayNightControl.dayPassedEvent.RemoveListener(OnDayPassed);
+            dayNightControl.newSeasonEvent.RemoveListener(OnNewSeason);
+        }
     }
 }
