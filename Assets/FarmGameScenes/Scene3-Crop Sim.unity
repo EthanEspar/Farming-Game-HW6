@@ -4459,6 +4459,7 @@ MonoBehaviour:
   spawnOffset: {x: 0, y: 0, z: 1.8}
   spawnHeight: 0.5
   showSpawnMenu: 1
+  seedsReturnedPerHarvest: 1
 --- !u!4 &2008711133
 Transform:
   m_ObjectHideFlags: 0

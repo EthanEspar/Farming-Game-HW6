@@ -18,6 +18,10 @@ public class plantManager : MonoBehaviour
     [Tooltip("Show on-screen spawn offset tuning menu during Play mode")]
     public bool showSpawnMenu = true;
 
+    [Min(0)]
+    [Tooltip("Seeds returned by one mature harvest so the player cannot become permanently stuck.")]
+    public int seedsReturnedPerHarvest = 1;
+
     private PlayerInteractPoint playerInteractPoint;
     private seedCounter seedCounter;
 
@@ -142,28 +146,33 @@ public class plantManager : MonoBehaviour
 
         foreach (Plant plant in existing)
         {
-        if (plant != null && plant.plantedTile == curTile)
-        {
-            if (!plant.IsMature)
+            if (plant != null && plant.plantedTile == curTile)
             {
-                Debug.Log("The plant is not ready to harvest.");
+                if (!plant.IsMature)
+                {
+                    Debug.Log("The plant is not ready to harvest.");
+                    return;
+                }
+
+                if (FarmFund.Instance == null)
+                {
+                    Debug.LogError("Farm Fund is missing.");
+                    return;
+                }
+
+                FarmFund.Instance.AddHarvestedPlant();
+                FarmFund.Instance.AddSeeds(seedsReturnedPerHarvest);
+
+                Debug.Log(
+                    "Plant harvested! Total harvested: " +
+                    FarmFund.Instance.HarvestedPlants +
+                    ". Seeds returned: " + seedsReturnedPerHarvest
+                );
+                Destroy(plant.gameObject);
                 return;
             }
-
-            if (FarmFund.Instance == null)
-            {
-                Debug.LogError("Farm Fund is missing.");
-                return;
-            }
-
-            FarmFund.Instance.AddHarvestedPlant();
-
-            Debug.Log("Plant harvested! Total harvested: " +FarmFund.Instance.HarvestedPlants
-        );
-        Destroy(plant.gameObject);
-        return;
         }
-    }
+
         if (!plantingAllowed)
         {
             Debug.Log("Cannot plant during Winter.");

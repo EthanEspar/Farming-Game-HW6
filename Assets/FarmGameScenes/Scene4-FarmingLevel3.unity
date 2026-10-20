@@ -151,7 +151,7 @@ MonoBehaviour:
   harvestedText: {fileID: 1106151912}
   moneyText: {fileID: 1453413617}
   levelCompleteButton: {fileID: 1192588512}
-  harvestGoal: 8
+  harvestGoal: 5
 --- !u!4 &14815684
 Transform:
   m_ObjectHideFlags: 0
@@ -711,6 +711,7 @@ MonoBehaviour:
   toolTwo: {fileID: 1916065782}
   toolThree: {fileID: 2147179086}
   visibleDuration: 1
+  playerAnimator: {fileID: 0}
 --- !u!1001 &187820835
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2613,6 +2614,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractPoint
   curTile: {fileID: 0}
+  animator: {fileID: 0}
   interactionDebounce: 0.25
 --- !u!65 &852659241
 BoxCollider:
@@ -3624,6 +3626,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractPoint
   curTile: {fileID: 0}
+  animator: {fileID: 0}
   interactionDebounce: 0.25
 --- !u!1 &1135064475
 GameObject:
@@ -5443,6 +5446,7 @@ MonoBehaviour:
   spawnOffset: {x: 0, y: 0, z: 1.8}
   spawnHeight: 0.5
   showSpawnMenu: 1
+  seedsReturnedPerHarvest: 1
 --- !u!4 &2008711133
 Transform:
   m_ObjectHideFlags: 0

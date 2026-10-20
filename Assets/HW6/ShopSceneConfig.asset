@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 473db106f4eb62c38f8e1c2a3298c5e6, type: 3}
+  m_Name: Shop Scene Config
+  m_EditorClassIdentifier: Assembly-CSharp::ShopSceneConfig
+  fallbackVisit:
+    displayName: Direct shop testing
+    entrySceneNames: []
+    nextSceneName: Scene3-Crop Sim
+    continueButtonLabel: Go to Level 2
+    instructions: Buy seeds before continuing to the farm.
+    announcement: The shop is using its fallback route because no matching entry scene was found.
+    showMarketPanel: 0
+    showSpeedBootsOffer: 0
+    showBagOffer: 0
+    showSecondSeedOffer: 0
+    requireSeedsToContinue: 1
+    requireBagToContinue: 0
+    minimumSecondSeedsToContinue: 0
+  visits:
+  - displayName: After Water Only Level
+    entrySceneNames:
+    - Scene1-FarmingSim
+    nextSceneName: Scene3-Crop Sim
+    continueButtonLabel: Go to Level 2
+    instructions: Buy seeds before continuing to the crop level.
+    announcement: Seeds cost $2 each.
+    showMarketPanel: 0
+    showSpeedBootsOffer: 0
+    showBagOffer: 0
+    showSecondSeedOffer: 0
+    requireSeedsToContinue: 1
+    requireBagToContinue: 0
+    minimumSecondSeedsToContinue: 0
+  - displayName: After One Plant Level
+    entrySceneNames:
+    - Scene3-Crop Sim
+    nextSceneName: Scene4-FarmingLevel3
+    continueButtonLabel: Go to Level 3
+    instructions: Sell crops, buy upgrades, and prepare for the next level.
+    announcement: New in the shop: Speed Boots!
+    showMarketPanel: 1
+    showSpeedBootsOffer: 1
+    showBagOffer: 0
+    showSecondSeedOffer: 0
+    requireSeedsToContinue: 0
+    requireBagToContinue: 0
+    minimumSecondSeedsToContinue: 0
+  - displayName: After Custom Upgrade Level
+    entrySceneNames:
+    - Scene4-FarmingLevel3
+    nextSceneName: Scene5-InventoryMerge
+    continueButtonLabel: Go to Inventory Level
+    instructions: Buy the Bag to unlock the inventory level.
+    announcement: ''
+    showMarketPanel: 1
+    showSpeedBootsOffer: 0
+    showBagOffer: 1
+    showSecondSeedOffer: 0
+    requireSeedsToContinue: 0
+    requireBagToContinue: 1
+    minimumSecondSeedsToContinue: 0
+  - displayName: After Inventory Level
+    entrySceneNames:
+    - Scene5-InventoryMerge
+    nextSceneName: Scene5-InventoryMerge
+    continueButtonLabel: Replay Inventory Level
+    instructions: Sell harvested wheat, then buy at least 3 corn seeds for the next level.
+    announcement: Corn seeds are now available for $3 each.
+    showMarketPanel: 1
+    showSpeedBootsOffer: 0
+    showBagOffer: 0
+    showSecondSeedOffer: 1
+    requireSeedsToContinue: 0
+    requireBagToContinue: 0
+    minimumSecondSeedsToContinue: 3

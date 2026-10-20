@@ -1464,6 +1464,7 @@ MonoBehaviour:
   toolTwo: {fileID: 439310174}
   toolThree: {fileID: 399730669}
   visibleDuration: 1
+  playerAnimator: {fileID: 0}
 --- !u!95 &759573597 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 8692079348738570116, guid: 4f9803ed31b25c049b47eaf15bcb0c32, type: 3}
@@ -2345,6 +2346,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractPoint
   curTile: {fileID: 0}
+  animator: {fileID: 0}
   interactionDebounce: 0.25
 --- !u!1 &1135064475
 GameObject:
@@ -2984,7 +2986,7 @@ MonoBehaviour:
   levelCompletePanel: {fileID: 0}
   levelCompleteButton: {fileID: 1192588512}
   startingFunds: 0
-  fundsWhenAllWatered: 10
+  fundsWhenAllWatered: 30
 --- !u!1 &1541785742 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6167329256975881451, guid: 1cd1442d70eeb284d861d1377f41788f, type: 3}

@@ -10,30 +10,42 @@ public class HarvestCounter : MonoBehaviour
     public int harvestGoal = 1;
 
     private bool levelCompleted;
+    private int harvestedAtSceneStart;
+    private FarmFund fund;
 
     private void Start()
     {
         Debug.Log("HarvestCounter running! Goal = " + harvestGoal);
 
         if (levelCompleteButton != null)
-        {
             levelCompleteButton.SetActive(false);
-        }
 
-        UpdateUI();
-    }
-
-    private void Update()
-    {
-        UpdateUI();
-
-        if (FarmFund.Instance == null || levelCompleted)
+        fund = FarmFund.Instance;
+        if (fund == null)
         {
-            Debug.LogWarning("FarmFund.Instance is NULL!");
+            Debug.LogWarning("HarvestCounter: Farm Fund is missing.");
             return;
         }
 
-        if (FarmFund.Instance.HarvestedPlants >= harvestGoal)
+        // Persistent crops stay in the Bag, but every level must be won by
+        // harvesting its own goal instead of reusing crops from an old level.
+        harvestedAtSceneStart = fund.HarvestedPlants;
+        fund.InventoryChanged += UpdateProgress;
+        UpdateProgress();
+    }
+
+    private void UpdateProgress()
+    {
+        if (fund == null) return;
+
+        int harvestedThisLevel = Mathf.Max(
+            0,
+            fund.HarvestedPlants - harvestedAtSceneStart
+        );
+
+        UpdateUI(harvestedThisLevel);
+
+        if (!levelCompleted && harvestedThisLevel >= harvestGoal)
         {
             levelCompleted = true;
 
@@ -46,23 +58,26 @@ public class HarvestCounter : MonoBehaviour
         }
     }
 
-    private void UpdateUI()
+    private void UpdateUI(int harvestedThisLevel)
     {
-        if (FarmFund.Instance == null)
-            return;
-
         if (harvestedText != null)
         {
             harvestedText.text =
-                "Harvested: " +
-                FarmFund.Instance.HarvestedPlants +
+                "Harvested this level: " +
+                harvestedThisLevel +
                 " / " +
                 harvestGoal;
         }
 
         if (moneyText != null)
         {
-            moneyText.text = FarmFund.Instance.Money.ToString();
+            moneyText.text = fund.Money.ToString();
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (fund != null)
+            fund.InventoryChanged -= UpdateProgress;
     }
 }

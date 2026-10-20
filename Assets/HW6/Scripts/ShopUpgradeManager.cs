@@ -1,161 +1,467 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
-using TMPro;
+using UnityEngine.UI;
 
 [DefaultExecutionOrder(100)]
 public class ShopUpgradeManager : MonoBehaviour
 {
     public enum ShopState { SeedShopOnly, Market }
 
+    [Header("Reusable shop configuration")]
+    [SerializeField] private ShopSceneConfig config;
+
     [Header("State (read only)")]
     public ShopState shopState = ShopState.SeedShopOnly;
 
-    [Header("When does the Market open?")]
-    [Tooltip("The Market opens when the player arrives from one of these scenes.")]
-    public string[] openMarketWhenComingFrom = { "Scene3-Crop Sim" };
-    [Tooltip("Testing only: always open the Market, even on the first visit.")]
-    public bool alwaysOpenMarket = false;
-
     [Header("Upgrade")]
     public int speedBootsPrice = 15;
-    [Tooltip("Shown to the player - keep it the same as SpeedBootsUpgrade's multiplier on the Player")]
+    [Tooltip("Keep this value in sync with SpeedBootsUpgrade on the Player.")]
     public int speedBootsBonusPercent = 50;
+    public int bagPrice = 20;
+    public int secondPlantSeedPrice = 3;
 
-    [Header("Upgrade panel (hidden on the first visit)")]
+    [Header("Optional market panel")]
     public GameObject marketPanel;
     public TMP_Text upgradeInfoText;
     public Button buySpeedBootsButton;
     public TMP_Text buySpeedBootsLabel;
     public TMP_Text marketMessageText;
 
-    [Header("Existing shop objects")]
-    [Tooltip("The existing 'Instructions' text at the top of the shop")]
+    [Header("Shared shop UI")]
     public TMP_Text instructionsText;
-    [Tooltip("The existing 'NextLvl' button (goes to Scene3 on the first visit)")]
     public Button nextLevelButton;
     public TMP_Text nextLevelButtonLabel;
 
-    [Header("Level flow on the Market visit")]
-    [Tooltip("Name of the 3rd farming level (Task 4). Must be added to Build Profiles.")]
-    // Ensure this matches the exact scene name in Build Settings
-    public string nextLevelScene = "Scene4-FarmingLevel3";
-    [Tooltip("Used if the scene above isn't in Build Profiles yet (so you can still test).")]
-    public string fallbackScene = "Scene3-Crop Sim";
-
     [Header("Testing only - set back to 0 before recording")]
     public int testAddMoney = 0;
+    public bool showInventoryTestingCanvas = false;
 
     private FarmFund fund;
     private SeedsMoneyScene2 seedShop;
+    private ShopSceneConfig.Visit activeVisit;
+    private Button bagButton;
+    private TMP_Text bagButtonLabel;
+    private Button secondSeedButton;
+    private TMP_Text secondSeedButtonLabel;
+    private InventoryManager inventoryUI;
 
-    void Start()
+    private void Start()
     {
         fund = FarmFund.Instance;
         if (fund == null)
         {
-            Debug.LogError("ShopUpgradeManager: Farm Fund is missing. Start from Scene 1 (or Scene0-Intro).");
+            Debug.LogError("ShopUpgradeManager: Farm Fund is missing. Start from Scene 1 or the intro scene.");
             if (marketPanel != null) marketPanel.SetActive(false);
             return;
         }
+
+        if (config == null)
+        {
+            Debug.LogError("ShopUpgradeManager: assign a ShopSceneConfig asset.");
+            if (marketPanel != null) marketPanel.SetActive(false);
+            return;
+        }
+
         seedShop = FindAnyObjectByType<SeedsMoneyScene2>();
+        if (seedShop != null) seedShop.ShopChanged += OnShopChanged;
 
-        if (testAddMoney > 0) fund.AddMoney(testAddMoney);
+        int debugMoneyGrant = testAddMoney;
+        if (showInventoryTestingCanvas && debugMoneyGrant <= 0)
+            debugMoneyGrant = 100;
 
-        // ---- decide the shop state ----
-        string cameFrom = SceneHistory.GetSceneBefore(SceneManager.GetActiveScene().name);
-        shopState = ShopState.SeedShopOnly;
-        if (alwaysOpenMarket) shopState = ShopState.Market;
-        foreach (string sceneName in openMarketWhenComingFrom)
+        if (debugMoneyGrant > 0)
         {
-            if (cameFrom == sceneName) shopState = ShopState.Market;
+            fund.AddMoney(debugMoneyGrant);
+            Debug.Log(
+                "ShopUpgradeManager TEST: added $" + debugMoneyGrant +
+                ". Runtime total is $" + fund.Money + "."
+            );
         }
-        Debug.Log("ShopUpgradeManager: came from '" + cameFrom + "' -> shop state = " + shopState);
 
-        if (buySpeedBootsButton != null) buySpeedBootsButton.onClick.AddListener(BuySpeedBoots);
+        string activeScene = SceneManager.GetActiveScene().name;
+        string cameFrom = SceneHistory.GetSceneBefore(activeScene);
+        activeVisit = config.ResolveVisit(cameFrom);
 
-        EnterState(shopState);
+        if (activeVisit == null)
+        {
+            Debug.LogError("ShopUpgradeManager: the shop configuration has no matching or fallback visit.");
+            return;
+        }
+
+        shopState = activeVisit.showMarketPanel
+            ? ShopState.Market
+            : ShopState.SeedShopOnly;
+
+        Debug.Log(
+            "ShopUpgradeManager: entered from '" + cameFrom +
+            "' using route '" + activeVisit.displayName + "'."
+        );
+
+        BindButtons();
+        ApplyVisit();
+
+        // Refresh the original shop labels after the optional test grant.
+        // RefreshUI also invokes ShopChanged, which refreshes route controls.
+        if (seedShop != null)
+            seedShop.RefreshUI();
+        else
+            RefreshAllUI();
     }
 
-    private void EnterState(ShopState state)
+    private void BindButtons()
     {
-        switch (state)
+        CreateSpecialOfferButtons();
+
+        if (buySpeedBootsButton != null)
         {
-            case ShopState.SeedShopOnly:
-                if (marketPanel != null) marketPanel.SetActive(false);
-                // nothing else changes - the seed shop works exactly like before
-                break;
-
-            case ShopState.Market:
-                if (marketPanel != null) marketPanel.SetActive(true);
-                if (instructionsText != null)
-                    instructionsText.text = "Market open! Sell crops & buy upgrades";
-                if (marketMessageText != null)
-                    marketMessageText.text = "New in the shop: Speed Boots!";
-
-                // reuse the existing NextLvl button, but send the player to the 3rd level instead
-                if (nextLevelButton != null)
-                {
-                    nextLevelButton.gameObject.SetActive(true);
-                    for (int i = 0; i < nextLevelButton.onClick.GetPersistentEventCount(); i++)
-                        nextLevelButton.onClick.SetPersistentListenerState(i, UnityEventCallState.Off);
-                    nextLevelButton.onClick.AddListener(GoToNextLevel);
-                }
-                if (nextLevelButtonLabel != null) nextLevelButtonLabel.text = "Go to Level 3";
-
-                RefreshUpgradeUI();
-                break;
+            buySpeedBootsButton.onClick.RemoveListener(BuySpeedBoots);
+            buySpeedBootsButton.onClick.AddListener(BuySpeedBoots);
         }
+
+        if (nextLevelButton == null) return;
+
+        // The original scene has a persistent destination. Disable it so every
+        // visit can use the destination declared in ShopSceneConfig instead.
+        for (int i = 0; i < nextLevelButton.onClick.GetPersistentEventCount(); i++)
+            nextLevelButton.onClick.SetPersistentListenerState(i, UnityEventCallState.Off);
+
+        nextLevelButton.onClick.RemoveListener(GoToNextLevel);
+        nextLevelButton.onClick.AddListener(GoToNextLevel);
     }
 
-    // ---------------- button actions ----------------
+    private void CreateSpecialOfferButtons()
+    {
+        if (buySpeedBootsButton == null)
+            return;
+
+        if (activeVisit.showBagOffer)
+            bagButton = CreateOfferButton(
+                "Buy Bag Button",
+                BuyBag,
+                out bagButtonLabel
+            );
+
+        if (activeVisit.showSecondSeedOffer)
+            secondSeedButton = CreateOfferButton(
+                "Buy Corn Seeds Button",
+                BuySecondPlantSeeds,
+                out secondSeedButtonLabel
+            );
+    }
+
+    private Button CreateOfferButton(
+        string objectName,
+        UnityAction action,
+        out TMP_Text label
+    )
+    {
+        GameObject buttonObject = Instantiate(
+            buySpeedBootsButton.gameObject,
+            buySpeedBootsButton.transform.parent
+        );
+        buttonObject.name = objectName;
+
+        Button button = buttonObject.GetComponent<Button>();
+        label = buttonObject.GetComponentInChildren<TMP_Text>(true);
+        if (button == null) return null;
+
+        for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+            button.onClick.SetPersistentListenerState(i, UnityEventCallState.Off);
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(action);
+        return button;
+    }
+
+    private void ApplyVisit()
+    {
+        if (marketPanel != null)
+            marketPanel.SetActive(activeVisit.showMarketPanel);
+
+        if (buySpeedBootsButton != null)
+            buySpeedBootsButton.gameObject.SetActive(activeVisit.showSpeedBootsOffer);
+
+        if (bagButton != null)
+            bagButton.gameObject.SetActive(activeVisit.showBagOffer);
+
+        if (secondSeedButton != null)
+            secondSeedButton.gameObject.SetActive(activeVisit.showSecondSeedOffer);
+
+        if (instructionsText != null && !string.IsNullOrWhiteSpace(activeVisit.instructions))
+            instructionsText.text = activeVisit.instructions;
+
+        if (marketMessageText != null)
+            marketMessageText.text = activeVisit.announcement;
+
+        if (nextLevelButton != null)
+            nextLevelButton.gameObject.SetActive(true);
+
+        if (nextLevelButtonLabel != null)
+            nextLevelButtonLabel.text = activeVisit.continueButtonLabel;
+    }
+
     public void BuySpeedBoots()
     {
+        if (fund == null) return;
+
         if (fund.HasSpeedUpgrade)
         {
             ShowMarketMessage("You already own the Speed Boots.");
             return;
         }
-        if (fund.BuySpeedUpgrade(speedBootsPrice))
-            ShowMarketMessage("Speed Boots bought! You'll walk " + speedBootsBonusPercent + "% faster in the next level.");
-        else
-            ShowMarketMessage("Not enough money - you need $" + (speedBootsPrice - fund.Money) + " more. Sell some crops first!");
 
-        RefreshUpgradeUI();
-        // refresh the seed shop's money text (its UpdateUI is private, so ask it by name)
-        if (seedShop != null) seedShop.SendMessage("UpdateUI", SendMessageOptions.DontRequireReceiver);
+        if (fund.BuySpeedUpgrade(speedBootsPrice))
+        {
+            ShowMarketMessage(
+                "Speed Boots bought! You'll walk " +
+                speedBootsBonusPercent + "% faster in the next level."
+            );
+        }
+        else
+        {
+            ShowMarketMessage(
+                "Not enough money - you need $" +
+                (speedBootsPrice - fund.Money) + " more."
+            );
+        }
+
+        if (seedShop != null)
+            seedShop.RefreshUI();
+        else
+            RefreshAllUI();
+    }
+
+    public void BuyBag()
+    {
+        if (fund == null) return;
+
+        if (fund.HasBag)
+        {
+            ShowMarketMessage("You already own the Bag.");
+            return;
+        }
+
+        if (fund.BuyBag(bagPrice))
+            ShowMarketMessage("Bag purchased! The inventory level is now unlocked.");
+        else
+            ShowMarketMessage("Not enough money - the Bag costs $" + bagPrice + ".");
+
+        if (seedShop != null)
+            seedShop.RefreshUI();
+        else
+            RefreshAllUI();
+    }
+
+    public void BuySecondPlantSeeds()
+    {
+        if (fund == null || seedShop == null) return;
+
+        if (!seedShop.TryGetRequestedQuantity(out int quantity))
+        {
+            ShowMarketMessage("Enter a valid corn seed quantity first.");
+            return;
+        }
+
+        int totalPrice = quantity * secondPlantSeedPrice;
+        if (fund.TrySpendMoney(totalPrice))
+        {
+            fund.AddSecondPlantSeeds(quantity);
+            ShowMarketMessage(
+                "Bought " + quantity + " corn seeds for $" + totalPrice + "."
+            );
+        }
+        else
+        {
+            ShowMarketMessage(
+                "Not enough money - " + quantity + " corn seeds cost $" +
+                totalPrice + "."
+            );
+        }
+
+        seedShop.RefreshUI();
     }
 
     public void GoToNextLevel()
     {
-        if (Application.CanStreamedLevelBeLoaded(nextLevelScene))
+        if (activeVisit == null || fund == null) return;
+
+        if (activeVisit.requireSeedsToContinue && fund.Seeds <= 0)
         {
-            SceneManager.LoadScene(nextLevelScene);
+            ShowMarketMessage("Buy at least one seed before continuing.");
+            RefreshContinueButton();
+            return;
         }
-        else
+
+        if (activeVisit.requireBagToContinue && !fund.HasBag)
         {
-            Debug.LogWarning("ShopUpgradeManager: scene '" + nextLevelScene + "' is not in Build Profiles yet - loading '" + fallbackScene + "' instead.");
-            SceneManager.LoadScene(fallbackScene);
+            ShowMarketMessage("Buy the Bag before continuing to the inventory level.");
+            RefreshContinueButton();
+            return;
         }
+
+        if (fund.SecondPlantSeeds < activeVisit.minimumSecondSeedsToContinue)
+        {
+            ShowMarketMessage(
+                "Buy at least " + activeVisit.minimumSecondSeedsToContinue +
+                " corn seeds so you can finish the next level."
+            );
+            RefreshContinueButton();
+            return;
+        }
+
+        string destination = activeVisit.nextSceneName;
+        if (string.IsNullOrWhiteSpace(destination))
+        {
+            ShowMarketMessage("This shop route does not have a next scene yet.");
+            return;
+        }
+
+        if (!Application.CanStreamedLevelBeLoaded(destination))
+        {
+            ShowMarketMessage(
+                "Scene '" + destination + "' must be enabled in Build Profiles."
+            );
+            return;
+        }
+
+        SceneManager.LoadScene(destination);
     }
 
-    // ---------------- GUI ----------------
+    private void OnShopChanged()
+    {
+        RefreshAllUI();
+    }
+
+    private void RefreshAllUI()
+    {
+        RefreshUpgradeUI();
+        RefreshBagUI();
+        RefreshSecondSeedUI();
+        EnsureInventoryUI();
+        RefreshContinueButton();
+    }
+
     private void RefreshUpgradeUI()
     {
         if (fund == null) return;
+
         if (upgradeInfoText != null)
-            upgradeInfoText.text = "Speed Boots - walk " + speedBootsBonusPercent + "% faster in Level 3";
+        {
+            if (activeVisit != null && activeVisit.showBagOffer)
+                upgradeInfoText.text = "Bag - unlocks the inventory level";
+            else if (activeVisit != null && activeVisit.showSecondSeedOffer)
+                upgradeInfoText.text =
+                    "Corn Seeds - buy at least " +
+                    activeVisit.minimumSecondSeedsToContinue +
+                    " for the next level";
+            else if (activeVisit != null && activeVisit.showSpeedBootsOffer)
+                upgradeInfoText.text =
+                    "Speed Boots - walk " + speedBootsBonusPercent + "% faster";
+            else
+                upgradeInfoText.text = "";
+        }
+
         if (buySpeedBootsButton != null)
             buySpeedBootsButton.interactable = !fund.HasSpeedUpgrade;
+
         if (buySpeedBootsLabel != null)
-            buySpeedBootsLabel.text = fund.HasSpeedUpgrade ? "Speed Boots: OWNED" : "Buy Speed Boots ($" + speedBootsPrice + ")";
+        {
+            buySpeedBootsLabel.text = fund.HasSpeedUpgrade
+                ? "Speed Boots: OWNED"
+                : "Buy Speed Boots ($" + speedBootsPrice + ")";
+        }
+    }
+
+    private void RefreshBagUI()
+    {
+        if (fund == null || bagButton == null) return;
+
+        bagButton.interactable = !fund.HasBag;
+
+        if (bagButtonLabel != null)
+        {
+            bagButtonLabel.text = fund.HasBag
+                ? "Bag: OWNED"
+                : "Buy Bag ($" + bagPrice + ")";
+        }
+    }
+
+    private void RefreshSecondSeedUI()
+    {
+        if (fund == null || secondSeedButton == null) return;
+
+        secondSeedButton.interactable = fund.Money >= secondPlantSeedPrice;
+
+        if (secondSeedButtonLabel != null)
+        {
+            secondSeedButtonLabel.text =
+                "Buy Corn Seeds ($" + secondPlantSeedPrice + " each)";
+        }
+    }
+
+    private void EnsureInventoryUI()
+    {
+        bool canShowBag = fund != null &&
+            (fund.HasBag || showInventoryTestingCanvas);
+
+        if (!canShowBag || inventoryUI != null)
+            return;
+
+        Canvas canvas = null;
+        if (nextLevelButton != null)
+            canvas = nextLevelButton.GetComponentInParent<Canvas>();
+        if (canvas == null && instructionsText != null)
+            canvas = instructionsText.GetComponentInParent<Canvas>();
+
+        if (canvas == null)
+        {
+            Debug.LogWarning("ShopUpgradeManager: no Canvas found for the Bag UI.");
+            return;
+        }
+
+        GameObject inventoryObject = new GameObject(
+            "Persistent Bag Inventory",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image)
+        );
+        inventoryObject.layer = canvas.gameObject.layer;
+        inventoryObject.transform.SetParent(canvas.transform, false);
+
+        inventoryUI = inventoryObject.AddComponent<InventoryManager>();
+        TMP_FontAsset font = instructionsText != null
+            ? instructionsText.font
+            : TMP_Settings.defaultFontAsset;
+        inventoryUI.Initialize(fund, font, showInventoryTestingCanvas);
+    }
+
+    private void RefreshContinueButton()
+    {
+        if (nextLevelButton == null || activeVisit == null || fund == null)
+            return;
+
+        bool hasRequiredSeeds =
+            !activeVisit.requireSeedsToContinue || fund.Seeds > 0;
+        bool hasRequiredBag =
+            !activeVisit.requireBagToContinue || fund.HasBag;
+        bool hasRequiredSecondSeeds =
+            fund.SecondPlantSeeds >= activeVisit.minimumSecondSeedsToContinue;
+
+        nextLevelButton.interactable =
+            hasRequiredSeeds && hasRequiredBag && hasRequiredSecondSeeds;
     }
 
     private void ShowMarketMessage(string message)
     {
-        Debug.Log("Market: " + message);
+        Debug.Log("Shop: " + message);
         if (marketMessageText != null) marketMessageText.text = message;
+    }
+
+    private void OnDestroy()
+    {
+        if (seedShop != null) seedShop.ShopChanged -= OnShopChanged;
     }
 }
 
@@ -164,7 +470,7 @@ public static class SceneHistory
     private static string previousScene = "";
     private static string currentScene = "";
 
-        public static string GetSceneBefore(string thisScene)
+    public static string GetSceneBefore(string thisScene)
     {
         return currentScene == thisScene ? previousScene : currentScene;
     }
@@ -173,7 +479,7 @@ public static class SceneHistory
     private static void Init()
     {
         previousScene = "";
-        currentScene = "";
+        currentScene = SceneManager.GetActiveScene().name;
         SceneManager.activeSceneChanged -= OnActiveSceneChanged;
         SceneManager.activeSceneChanged += OnActiveSceneChanged;
     }
