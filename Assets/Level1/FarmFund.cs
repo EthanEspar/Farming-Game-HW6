@@ -69,6 +69,19 @@ public class FarmFund : MonoBehaviour
         return true;
     }
 
+    // Uses one available seed from the global seed pool.
+    // Prefers wheat seeds first, then corn seeds.
+    public bool TryUseAnySeed()
+    {
+        if (Seeds > 0)
+            return TryUseSeed();
+
+        if (SecondPlantSeeds > 0)
+            return TryUseSecondPlantSeed();
+
+        return false;
+    }
+
     public void AddSeeds(int amount)
     {
         Seeds += Mathf.Max(0, amount);

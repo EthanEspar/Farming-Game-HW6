@@ -47,6 +47,26 @@ public class PlayerInteractPoint:MonoBehaviour
     // Keep PerformInteraction public so other scripts can trigger an interaction (e.g. on E key)
     public void PerformInteraction()
     {
+        // Scene 5 tool rules: only slot 1 can till, only slot 2 can water.
+        if (Scene5InventoryHotbar.ToolRulesActiveInScene5)
+        {
+            if (curTile == null) return;
+            var gatedTile = curTile.GetComponent<FarmTileControl>();
+            if (gatedTile == null) return;
+
+            int slot = Scene5InventoryHotbar.SelectedSlotOneBased;
+            if (gatedTile.tileCond == FarmTileControl.FarmTileCond.Grass && slot != 1)
+            {
+                Debug.Log("Scene5 rule: select slot 1 (Till) to till grass.");
+                return;
+            }
+            if (gatedTile.tileCond == FarmTileControl.FarmTileCond.Tilled && slot != 2)
+            {
+                Debug.Log("Scene5 rule: select slot 2 (Water) to water tilled soil.");
+                return;
+            }
+        }
+
         // debounce to avoid multiple components or duplicate callbacks triggering multiple interactions
         if (Time.time - lastInteractionTime < interactionDebounce)
         {

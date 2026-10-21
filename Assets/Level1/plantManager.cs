@@ -18,10 +18,6 @@ public class plantManager : MonoBehaviour
     [Tooltip("Show on-screen spawn offset tuning menu during Play mode")]
     public bool showSpawnMenu = true;
 
-    [Min(0)]
-    [Tooltip("Seeds returned by one mature harvest so the player cannot become permanently stuck.")]
-    public int seedsReturnedPerHarvest = 1;
-
     private PlayerInteractPoint playerInteractPoint;
     private seedCounter seedCounter;
 
@@ -135,19 +131,19 @@ public class plantManager : MonoBehaviour
         FarmTileControl ft = curTile.GetComponent<FarmTileControl>();
         if (ft == null) return;
 
-        // only allow planting on Watered tiles
-        if (ft.tileCond != FarmTileControl.FarmTileCond.Watered)
-        {
-            Debug.Log("Cannot plant here. Tile is not watered.");
-            return;
-        }
-
         Plant[] existing = FindObjectsByType<Plant>(FindObjectsSortMode.None);
 
         foreach (Plant plant in existing)
         {
             if (plant != null && plant.plantedTile == curTile)
             {
+                // Scene 5 tool rules: only slot 3 can harvest.
+                if (Scene5InventoryHotbar.ToolRulesActiveInScene5 && Scene5InventoryHotbar.SelectedSlotOneBased != 3)
+                {
+                    Debug.Log("Scene5 rule: select slot 3 (Scythe) to harvest crops.");
+                    return;
+                }
+
                 if (!plant.IsMature)
                 {
                     Debug.Log("The plant is not ready to harvest.");
@@ -161,16 +157,21 @@ public class plantManager : MonoBehaviour
                 }
 
                 FarmFund.Instance.AddHarvestedPlant();
-                FarmFund.Instance.AddSeeds(seedsReturnedPerHarvest);
 
                 Debug.Log(
                     "Plant harvested! Total harvested: " +
-                    FarmFund.Instance.HarvestedPlants +
-                    ". Seeds returned: " + seedsReturnedPerHarvest
+                    FarmFund.Instance.HarvestedPlants
                 );
                 Destroy(plant.gameObject);
                 return;
             }
+        }
+
+        // only allow planting on Watered tiles
+        if (ft.tileCond != FarmTileControl.FarmTileCond.Watered)
+        {
+            Debug.Log("Cannot plant here. Tile is not watered.");
+            return;
         }
 
         if (!plantingAllowed)
@@ -180,14 +181,45 @@ public class plantManager : MonoBehaviour
             return;
         }
 
+        // Scene 5 tool rules: only slot 4 can plant seeds.
+        if (Scene5InventoryHotbar.ToolRulesActiveInScene5 && Scene5InventoryHotbar.SelectedSlotOneBased != 4)
+        {
+            Debug.Log("Scene5 rule: select slot 4 (Seeds) to plant.");
+            return;
+        }
+
         // ensure player has seeds
+        bool usedSeed;
         if (seedCounter != null)
         {
-            if (!seedCounter.TryUseSeed())
+            if (FarmFund.Instance == null)
             {
-                Debug.Log("No seeds left to plant.");
+                Debug.LogError("Farm Fund is missing.");
                 return;
             }
+
+            // Use any seed from the persistent global seed bank (wheat first, then corn)
+            usedSeed = FarmFund.Instance.TryUseAnySeed();
+
+            // keep seed UI synced
+            seedCounter.SendMessage("UpdateSeedUI", SendMessageOptions.DontRequireReceiver);
+        }
+        else
+        {
+            if (FarmFund.Instance == null)
+            {
+                Debug.LogError("Farm Fund is missing.");
+                return;
+            }
+
+            // fallback when the seedCounter UI is not present in this scene
+            usedSeed = FarmFund.Instance.TryUseAnySeed();
+        }
+
+        if (!usedSeed)
+        {
+            Debug.Log("No seeds left to plant.");
+            return;
         }
 
         // spawn plant at tile position with offset and height

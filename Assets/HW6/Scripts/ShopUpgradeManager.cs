@@ -267,7 +267,9 @@ public class ShopUpgradeManager : MonoBehaviour
         int totalPrice = quantity * secondPlantSeedPrice;
         if (fund.TrySpendMoney(totalPrice))
         {
-            fund.AddSecondPlantSeeds(quantity);
+            // Add to persistent inventory using the shared item-id API so
+            // inventory UIs treat this as a proper corn-seed item stack.
+            fund.AddItem(FarmInventoryItemId.SecondPlantSeed, quantity);
             ShowMarketMessage(
                 "Bought " + quantity + " corn seeds for $" + totalPrice + "."
             );

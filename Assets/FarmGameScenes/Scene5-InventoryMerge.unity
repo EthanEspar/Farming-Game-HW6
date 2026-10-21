@@ -710,7 +710,7 @@ MonoBehaviour:
   toolOne: {fileID: 286883405}
   toolTwo: {fileID: 1916065782}
   toolThree: {fileID: 2147179086}
-  visibleDuration: 1
+  playerAnimator: {fileID: 0}
 --- !u!1001 &187820835
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1622,52 +1622,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 477877634}
   m_CullTransparentMesh: 1
---- !u!1 &479420770
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 479420772}
-  - component: {fileID: 479420771}
-  m_Layer: 0
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &479420771
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 479420770}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 10b95bafe16efc240a79aa4109e12fe1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Level4ShopButtonController
-  buttonObjectName: Next Level
-  shopSceneName: Scene2-Shop
---- !u!4 &479420772
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 479420770}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 80.10121, y: 479, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &481372058
 GameObject:
   m_ObjectHideFlags: 0
@@ -2613,6 +2567,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractPoint
   curTile: {fileID: 0}
+  animator: {fileID: 0}
   interactionDebounce: 0.25
 --- !u!65 &852659241
 BoxCollider:
@@ -3624,6 +3579,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractPoint
   curTile: {fileID: 0}
+  animator: {fileID: 0}
   interactionDebounce: 0.25
 --- !u!1 &1135064475
 GameObject:
@@ -4939,6 +4895,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1658352098}
   m_CullTransparentMesh: 1
+--- !u!1 &1762700519
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1762700521}
+  - component: {fileID: 1762700520}
+  m_Layer: 0
+  m_Name: Scene5InventoryHotbar
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1762700520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1762700519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9f0b33becd3ac44bac0e21dbcfcc805, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Scene5InventoryHotbar
+  toolOneSprite: {fileID: 21300212, guid: 2700e06d970d112489ff23cfb58c3f78, type: 3}
+  toolTwoSprite: {fileID: 21300216, guid: 2700e06d970d112489ff23cfb58c3f78, type: 3}
+  toolThreeSprite: {fileID: 21300208, guid: 2700e06d970d112489ff23cfb58c3f78, type: 3}
+--- !u!4 &1762700521
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1762700519}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 792.06354, y: 148.09685, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1797991747
 GameObject:
   m_ObjectHideFlags: 0
@@ -5443,7 +5446,6 @@ MonoBehaviour:
   spawnOffset: {x: 0, y: 0, z: 1.8}
   spawnHeight: 0.5
   showSpawnMenu: 1
-  seedsReturnedPerHarvest: 1
 --- !u!4 &2008711133
 Transform:
   m_ObjectHideFlags: 0
@@ -5673,4 +5675,4 @@ SceneRoots:
   - {fileID: 144870960}
   - {fileID: 481372062}
   - {fileID: 1261996759}
-  - {fileID: 479420772}
+  - {fileID: 1762700521}

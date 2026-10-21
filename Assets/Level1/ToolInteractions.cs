@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Events;
@@ -18,16 +17,10 @@ public class ToolInteractions : MonoBehaviour
     [Tooltip("Tool to show when a fully grown crop is harvested")]
     public GameObject toolThree;
 
-    [Tooltip("How long (seconds) a tool stays visible after an interaction if the player doesn't press again")]
-    public float visibleDuration = 1f;
-
     private PlayerInteractPoint playerInteractPoint;
     private InputAction interactEAction;
     [SerializeField]
     private Animator playerAnimator;
-
-    private GameObject lastInteractedTile;
-    private Coroutine hideCoroutine;
 
     void Start()
     {
@@ -108,24 +101,21 @@ public class ToolInteractions : MonoBehaviour
 
     void Update()
     {
-        // hide tools when player moves away from the last interacted tile
-        if (lastInteractedTile != null && playerInteractPoint != null)
+        // In Scene 5, show tool based on selected inventory slot (1=till, 2=water, 3=scythe)
+        if (Scene5InventoryHotbar.ToolRulesActiveInScene5)
         {
-            var cur = playerInteractPoint.GetCurrentTile();
-            if (cur == null || cur != lastInteractedTile)
-            {
-                if (hideCoroutine != null) { StopCoroutine(hideCoroutine); hideCoroutine = null; }
-                HideAllTools();
-                lastInteractedTile = null;
-            }
+            int slot = Scene5InventoryHotbar.SelectedSlotOneBased;
+            if (slot == 1) SetToolVisibility(true, false, false);
+            else if (slot == 2) SetToolVisibility(false, true, false);
+            else if (slot == 3) SetToolVisibility(false, false, true);
+            else HideAllTools();
         }
 
-        // movement handled by PlayerMovement script; no animator control here
-
-        // legacy E fallback
+        // legacy E fallback (Input System keyboard)
         if (interactEAction == null)
         {
-            if (Input.GetKeyDown(KeyCode.E))
+            var kb = Keyboard.current;
+            if (kb != null && kb.eKey.wasPressedThisFrame)
             {
                 playerInteractPoint?.PerformInteraction();
             }
@@ -142,26 +132,7 @@ public class ToolInteractions : MonoBehaviour
         Debug.Log("ToolInteractions: tileCond=" + (farmTile?farmTile.tileCond.ToString():"no farmTile"));
         if (farmTile == null) return;
 
-        lastInteractedTile = tile;
-
-        switch (farmTile.tileCond)
-        {
-            case FarmTileControl.FarmTileCond.Grass:
-                HideAllTools();
-                break;
-            case FarmTileControl.FarmTileCond.Tilled:
-                SetToolVisibility(true, false, false);
-                break;
-            case FarmTileControl.FarmTileCond.Watered:
-                SetToolVisibility(false, true, false);
-                break;
-            default:
-                HideAllTools();
-                break;
-        }
-
-        if (hideCoroutine != null) { StopCoroutine(hideCoroutine); hideCoroutine = null; }
-        hideCoroutine = StartCoroutine(HideAfterDelay());
+        // Tool visibility is driven by selected inventory slot, not by tile action state.
 
         // trigger player interaction animation if available
         try
@@ -182,9 +153,7 @@ public class ToolInteractions : MonoBehaviour
     public void ShowHarvestTool()
     {
         Debug.Log("ToolInteractions: ShowHarvestTool called");
-        SetToolVisibility(false, false, true);
-        if (hideCoroutine != null) { StopCoroutine(hideCoroutine); hideCoroutine = null; }
-        hideCoroutine = StartCoroutine(HideAfterDelay());
+        // Tool visibility is driven by selected inventory slot, not by harvest action.
 
         // also trigger animation on harvest
         try
@@ -208,14 +177,6 @@ public class ToolInteractions : MonoBehaviour
         {
             playerInteractPoint.PerformInteraction();
         }
-    }
-
-    private IEnumerator HideAfterDelay()
-    {
-        yield return new WaitForSeconds(visibleDuration);
-        HideAllTools();
-        lastInteractedTile = null;
-        hideCoroutine = null;
     }
 
     private void SetToolVisibility(bool one, bool two, bool three)
