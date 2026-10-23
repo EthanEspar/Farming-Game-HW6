@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c1e37ba01664aa3bc1fbdca8c089e50, type: 3}
+  m_Name: GameBalanceConfig
+  m_EditorClassIdentifier: Assembly-CSharp::GameBalanceConfig
+  levels:
+  - sceneName: Scene1-FarmingSim
+    displayName: Level 1
+    seedItem: 0
+    dayLengthSeconds: -1
+    weeksPerSeason: -1
+    harvestGoal: 0
+    playerSpeed: 3.5
+    objective: 'Level 1: Till and water every tile to earn ${reward} for seeds!'
+  - sceneName: Scene3-Crop Sim
+    displayName: Level 2
+    seedItem: 0
+    dayLengthSeconds: 15
+    weeksPerSeason: 1
+    harvestGoal: 3
+    playerSpeed: 3.5
+    objective: 'Level 2: Till, water, then press E to plant wheat. Harvest {goal} to win!'
+  - sceneName: Scene4-FarmingLevel3
+    displayName: Level 3
+    seedItem: 0
+    dayLengthSeconds: 12
+    weeksPerSeason: 2
+    harvestGoal: 5
+    playerSpeed: 3.5
+    objective: 'Level 3: Harvest {goal} wheat. Soil dries out after 2 days, so plant soon after watering!'
+  - sceneName: Scene5-InventoryMerge
+    displayName: Level 4
+    seedItem: 0
+    dayLengthSeconds: 12
+    weeksPerSeason: 2
+    harvestGoal: 6
+    playerSpeed: 3.5
+    objective: 'Level 4: Use your bag! 1 Hoe, 2 Watering Can, 3 Scythe, 4 Seeds. Harvest {goal} wheat.'
+  - sceneName: Scene6-Corn-Level
+    displayName: Level 5
+    seedItem: 2
+    dayLengthSeconds: 12
+    weeksPerSeason: 2
+    harvestGoal: 6
+    playerSpeed: 3.5
+    objective: 'Level 5: Grow corn! Harvest {goal} corn to finish the farm.'
+  shopSceneName: Scene2-Shop
+  speedBootsMultiplier: 1.5
+  giveRescueSeeds: 1
+  rescueSeedAmount: 2
+  maxRescuesPerLevel: 3
+  harvestGoalIsOnlyWinCondition: 1

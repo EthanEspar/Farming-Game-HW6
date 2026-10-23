@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6229058708974b8c8488c917be965add, type: 3}
+  m_Name: GameFeedbackConfig
+  m_EditorClassIdentifier: Assembly-CSharp::GameFeedbackConfig
+  buySound: {fileID: 8300000, guid: 90125b99e7c54fa89d721191dc235861, type: 3}
+  sellSound: {fileID: 8300000, guid: 7d63c03743ed49fd876272a5a403457e, type: 3}
+  plantSound: {fileID: 8300000, guid: f3d80e420ab640c3b7b27013ce7c6d91, type: 3}
+  harvestSound: {fileID: 8300000, guid: 65b2e728e6fb40d386fc86295fe7efe3, type: 3}
+  levelCompleteSound: {fileID: 8300000, guid: 68547b91177f4a74852f859eaf0bd97b, type: 3}
+  newSeasonSound: {fileID: 8300000, guid: cfd3272161c24079bde0db1353a25dd2, type: 3}
+  errorSound: {fileID: 8300000, guid: 31cdcde705e8499b8fc9dcbd916f53e7, type: 3}
+  effectsVolume: 0.8
+  messageSeconds: 3.2
+  maxMessagesOnScreen: 3
+  messageTopOffset: 235
