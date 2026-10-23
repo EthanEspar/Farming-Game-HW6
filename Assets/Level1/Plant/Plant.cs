@@ -2,6 +2,10 @@ using UnityEngine;
 
 public class Plant : MonoBehaviour
 {
+    [Header("Scriptable Object Data")]
+    [Tooltip("Assign the corresponding PlantData asset (e.g., CornData, TomatoData) here.")]
+    public PlantData plantData;
+
     [Tooltip("Child GameObject representing the small (planted) model")]
     public GameObject smallModel;
     [Tooltip("Child GameObject representing the mid (growing) model")]
@@ -9,9 +13,8 @@ public class Plant : MonoBehaviour
     [Tooltip("Child GameObject representing the large (mature) model")]
     public GameObject largeModel;
 
-    [Tooltip("Days after planting to switch to mid model")]
+    [Header("Growth Timings (Can override or default from PlantData)")]
     public int daysToMid = 2;
-    [Tooltip("Days after planting to switch to large model")]
     public int daysToLarge = 4;
 
     [HideInInspector]
@@ -30,6 +33,12 @@ public class Plant : MonoBehaviour
 
     void Awake()
     {
+        // If plantData is assigned, pull default values/prefabs from it if needed
+        if (plantData != null)
+        {
+            // You can initialize values from plantData here if you configure them in the ScriptableObject
+        }
+
         // auto-assign child models if not assigned
         if (smallModel == null || midModel == null || largeModel == null)
         {
@@ -54,17 +63,29 @@ public class Plant : MonoBehaviour
         if (dayNightControl != null)
         {
             dayNightControl.dayPassedEvent.AddListener(OnDayPassed);
-            // HW6 Task 1: also listen to the "new season" event
             dayNightControl.newSeasonEvent.AddListener(OnNewSeason);
+
+            // Check immediately on spawn if it belongs in the current season
+            CheckSeasonValidity(dayNightControl.GetSeason());
         }
     }
 
     private void OnNewSeason(DayNightControl.Season newSeason)
     {
-        if (newSeason == DayNightControl.Season.Winter && plantedTile != null)
+        CheckSeasonValidity(newSeason);
+    }
+
+    private void CheckSeasonValidity(DayNightControl.Season currentSeason)
+    {
+        if (plantData != null)
         {
-            Debug.Log("Winter arrived - removing plant on " + plantedTile.name);
-            Destroy(gameObject);
+            // If the current season is NOT in the plant's allowed growing seasons, make it disappear/destroy
+            if (!plantData.CanGrowInSeason(currentSeason))
+            {
+                Debug.Log($"{plantData.plantName} disappears or cannot survive during {currentSeason} on {plantedTile?.name}");
+                Destroy(gameObject);
+                return;
+            }
         }
     }
 
@@ -76,7 +97,12 @@ public class Plant : MonoBehaviour
 
     private void OnDayPassed()
     {
-        daysPassedSincePlanting++;
+        // Apply growth speed multiplier from Scriptable Object if desired
+        float speedMultiplier = (plantData != null) ? plantData.growSpeed : 1.0f;
+        
+        // Increment days based on grow speed weighting
+        daysPassedSincePlanting += Mathf.Max(1, Mathf.RoundToInt(1f * speedMultiplier));
+
         if (daysPassedSincePlanting >= daysToLarge)
         {
             SetStageLarge();

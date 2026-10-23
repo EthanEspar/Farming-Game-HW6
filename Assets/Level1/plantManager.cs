@@ -3,7 +3,11 @@ using UnityEngine.InputSystem;
 
 public class plantManager : MonoBehaviour
 {
-    [Tooltip("Plant prefab to spawn (parent object with three stage models as children)")]
+    [Header("Plant Configuration Assets")]
+    [Tooltip("List or array of available Plant Data scriptable objects (e.g., Corn, Tomato, etc.)")]
+    public PlantData[] availablePlants;
+
+    [Tooltip("Default plant prefab fallback if none is selected")]
     public GameObject plantPrefab;
 
     [Tooltip("Key to press to plant (while standing on a watered tile). Uses the new Input System Key enum")]
@@ -31,8 +35,7 @@ public class plantManager : MonoBehaviour
         playerInteractPoint = FindObjectOfType<PlayerInteractPoint>();
         if (playerInteractPoint == null)
             Debug.LogWarning("plantManager: PlayerInteractPoint not found in scene.");
-        if (plantPrefab == null)
-            Debug.LogWarning("plantManager: plantPrefab is not assigned.");
+        
         seedCounter = FindObjectOfType<seedCounter>();
         if (seedCounter == null)
             Debug.LogWarning("plantManager: seedCounter not found in scene. Planting won't decrement seeds.");
@@ -72,6 +75,7 @@ public class plantManager : MonoBehaviour
             TryPlantAtPlayerTile();
         }
     }
+
     void OnGUI()
     {
         if (!Application.isPlaying) return;
@@ -124,7 +128,7 @@ public class plantManager : MonoBehaviour
 
     private void TryPlantAtPlayerTile()
     {
-        if (playerInteractPoint == null || plantPrefab == null) return;
+        if (playerInteractPoint == null) return;
         GameObject curTile = playerInteractPoint.GetCurrentTile();
         if (curTile == null) return;
 
@@ -188,32 +192,30 @@ public class plantManager : MonoBehaviour
             return;
         }
 
+        // Determine which plant data to use based on current selection / inventory
+        PlantData selectedPlantData = GetActivePlantData();
+        GameObject prefabToSpawn = (selectedPlantData != null && selectedPlantData.smallPlantPrefab != null) 
+                                   ? selectedPlantData.smallPlantPrefab 
+                                   : plantPrefab;
+
+        if (prefabToSpawn == null)
+        {
+            Debug.LogError("plantManager: No valid plant prefab available to spawn!");
+            return;
+        }
+
         // ensure player has seeds
         bool usedSeed;
+        if (FarmFund.Instance == null)
+        {
+            Debug.LogError("Farm Fund is missing.");
+            return;
+        }
+
+        usedSeed = FarmFund.Instance.TryUseAnySeed();
         if (seedCounter != null)
         {
-            if (FarmFund.Instance == null)
-            {
-                Debug.LogError("Farm Fund is missing.");
-                return;
-            }
-
-            // Use any seed from the persistent global seed bank (wheat first, then corn)
-            usedSeed = FarmFund.Instance.TryUseAnySeed();
-
-            // keep seed UI synced
             seedCounter.SendMessage("UpdateSeedUI", SendMessageOptions.DontRequireReceiver);
-        }
-        else
-        {
-            if (FarmFund.Instance == null)
-            {
-                Debug.LogError("Farm Fund is missing.");
-                return;
-            }
-
-            // fallback when the seedCounter UI is not present in this scene
-            usedSeed = FarmFund.Instance.TryUseAnySeed();
         }
 
         if (!usedSeed)
@@ -224,18 +226,44 @@ public class plantManager : MonoBehaviour
 
         // spawn plant at tile position with offset and height
         Vector3 spawnPos = curTile.transform.position + spawnOffset;
-        spawnPos.y += spawnHeight; // raise slightly so it sits on the tile
-        GameObject newPlant = Instantiate(plantPrefab, spawnPos, Quaternion.identity, this.transform);
-        // try to set plantedTile on Plant script
+        spawnPos.y += spawnHeight; 
+        GameObject newPlant = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity, this.transform);
+        
+        // Setup plant component and pass the ScriptableObject reference
         Plant plantComp = newPlant.GetComponent<Plant>();
         if (plantComp != null)
         {
             plantComp.plantedTile = curTile;
+            
+            // If your Plant script has a reference field for PlantData, assign it here dynamically:
+            // plantComp.plantData = selectedPlantData;
+
             plantComp.InitializeAsPlanted();
         }
         else
         {
             Debug.LogWarning("Spawned plant prefab does not contain a Plant component.");
         }
+    }
+
+    /// <label>Helper method to select which PlantData to instantiate</label>
+    private PlantData GetActivePlantData()
+    {
+        if (availablePlants == null || availablePlants.Length == 0) return null;
+
+        // Example logic: Map active hotbar items or default to the first/second plant asset.
+        // If you have multiple seed types, you can check which seed is active here.
+        // For demonstration, if index 0 is corn and index 1 is tomato:
+        int index = 0; 
+        
+        // You can tie this index to your inventory system selection if applicable, e.g.:
+        // if (Scene5InventoryHotbar.SelectedSlotOneBased == 4) index = 0; // Corn
+        // else if (/* another condition */) index = 1; // Tomato
+
+        if (index < availablePlants.Length)
+        {
+            return availablePlants[index];
+        }
+        return availablePlants[0];
     }
 }

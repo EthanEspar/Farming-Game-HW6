@@ -2362,11 +2362,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4000010819335194, guid: c26cacf51e485c54b95fdbf9ad976ddf, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.43054
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4000010819335194, guid: c26cacf51e485c54b95fdbf9ad976ddf, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -1.7390699
+      value: -1.80067
       objectReference: {fileID: 0}
     - target: {fileID: 4000010819335194, guid: c26cacf51e485c54b95fdbf9ad976ddf, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3630,6 +3630,57 @@ MonoBehaviour:
   numFarmTileX: 6
   numFarmTileZ: 6
   gapSizeBetweenTiles: 0.1
+--- !u!1 &1147186117
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1147186119}
+  - component: {fileID: 1147186118}
+  m_Layer: 0
+  m_Name: Plant2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1147186118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1147186117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77b9aad65e35ffa4fb036ed2f51aea3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Plant
+  plantData: {fileID: 0}
+  smallModel: {fileID: 1000011580534764, guid: c26cacf51e485c54b95fdbf9ad976ddf, type: 3}
+  midModel: {fileID: 1000010164499024, guid: f0666abddd74e5644ac4cf977d74e5e9, type: 3}
+  largeModel: {fileID: 1000011853396770, guid: becd827951d0b4046808ba97418ecf28, type: 3}
+  daysToMid: 2
+  daysToLarge: 4
+  plantedTile: {fileID: 0}
+--- !u!4 &1147186119
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1147186117}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.16007, y: 0, z: -4.93861}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1173184620 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2015955068725829075, guid: 9520bada6c169bd499d4f8d942ca249e, type: 3}
@@ -5327,6 +5378,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77b9aad65e35ffa4fb036ed2f51aea3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Plant
+  plantData: {fileID: 0}
   smallModel: {fileID: 1811735818}
   midModel: {fileID: 2028340068}
   largeModel: {fileID: 1327695213}
@@ -5441,6 +5493,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17a996ff1793209489c3595c481fe39f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::plantManager
+  availablePlants:
+  - {fileID: 11400000, guid: 891796d11ae54fe4fa744f48ad8ec2da, type: 2}
+  - {fileID: 11400000, guid: 3497707e7a864cf4481c5c16e1dccd97, type: 2}
   plantPrefab: {fileID: 1935080188}
   plantKey: 19
   spawnOffset: {x: 0, y: 0, z: 1.8}
@@ -5669,6 +5724,7 @@ SceneRoots:
   - {fileID: 1832991199}
   - {fileID: 1830507122}
   - {fileID: 1935080190}
+  - {fileID: 1147186119}
   - {fileID: 2008711133}
   - {fileID: 14815684}
   - {fileID: 1797991749}
