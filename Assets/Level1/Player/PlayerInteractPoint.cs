@@ -1,100 +1,143 @@
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using System;
 
-public class PlayerInteractPoint:MonoBehaviour
+public class PlayerInteractPoint : MonoBehaviour
 {
     [SerializeField]
     private GameObject curTile;
+
     private InputAction interactAction;
 
-    private bool curInteractionTriggered= false;//each space press might trigger multiple times across multiple frames
+    private bool curInteractionTriggered = false;
+
     private StaminaBarScript stamina;
+
     [SerializeField]
     private Animator animator;
 
-    [Tooltip("Minimum time between interactions in seconds to avoid double-triggering")]
+    [Tooltip("Minimum time between interactions in seconds")]
     public float interactionDebounce = 0.25f;
+
     private float lastInteractionTime = -10f;
 
     private void Start()
     {
         interactAction = InputSystem.actions.FindAction("Jump");
-        //register OnTileInteractPerformed to the action so it gets called when the space key is pressed
-        if (interactAction != null)
-            interactAction.performed += OnTileInteractPerformed;
 
-        // find stamina manager in scene
+        if (interactAction != null)
+        {
+            interactAction.performed += OnTileInteractPerformed;
+        }
+
         stamina = FindObjectOfType<StaminaBarScript>();
-        // try to find an Animator on the player (or its children) to trigger interaction animations
-        if (animator == null) animator = GetComponentInChildren<Animator>();
-        if (animator != null) Debug.Log("PlayerInteractPoint: found Animator -> " + animator.gameObject.name);
+
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
+
+        if (animator != null)
+        {
+            Debug.Log(
+                "PlayerInteractPoint: found Animator -> " +
+                animator.gameObject.name
+            );
+        }
     }
 
-    // Event invoked after a tile has been interacted with and its state updated
+    // Event invoked after a tile has been interacted with
     public event Action<GameObject> AfterTileInteracted;
 
-    //this callback method will make sure each Space Key press only call the InteractWithFarmTile() once
-    //do not use Update() and check Action.IsPressed() since this function can trigger multiple times 
-    //across multiple frames each time the player press the Space Key
-    private void OnTileInteractPerformed(InputAction.CallbackContext context)
+    private void OnTileInteractPerformed(
+        InputAction.CallbackContext context
+    )
     {
         PerformInteraction();
     }
 
-    // Perform interaction logic used by multiple input paths (space action, E action, legacy E key)
-    // Keep PerformInteraction public so other scripts can trigger an interaction (e.g. on E key)
     public void PerformInteraction()
     {
-        // Scene 5 tool rules: only slot 1 can till, only slot 2 can water.
+        // Scene 5 tool rules
         if (Scene5InventoryHotbar.ToolRulesActiveInScene5)
         {
-            if (curTile == null) return;
+            if (curTile == null)
+                return;
+
             var gatedTile = curTile.GetComponent<FarmTileControl>();
-            if (gatedTile == null) return;
+
+            if (gatedTile == null)
+                return;
 
             int slot = Scene5InventoryHotbar.SelectedSlotOneBased;
-            if (gatedTile.tileCond == FarmTileControl.FarmTileCond.Grass && slot != 1)
+
+            if (
+                gatedTile.tileCond ==
+                FarmTileControl.FarmTileCond.Grass &&
+                slot != 1
+            )
             {
-                Debug.Log("Scene5 rule: select slot 1 (Till) to till grass.");
+                Debug.Log(
+                    "Scene5 rule: select slot 1 (Till) to till grass."
+                );
                 return;
             }
-            if (gatedTile.tileCond == FarmTileControl.FarmTileCond.Tilled && slot != 2)
+
+            if (
+                gatedTile.tileCond ==
+                FarmTileControl.FarmTileCond.Tilled &&
+                slot != 2
+            )
             {
-                Debug.Log("Scene5 rule: select slot 2 (Water) to water tilled soil.");
+                Debug.Log(
+                    "Scene5 rule: select slot 2 (Water) to water tilled soil."
+                );
                 return;
             }
         }
 
-        // debounce to avoid multiple components or duplicate callbacks triggering multiple interactions
-        if (Time.time - lastInteractionTime < interactionDebounce)
+        // Prevent duplicate interactions
+        if (
+            Time.time - lastInteractionTime <
+            interactionDebounce
+        )
         {
             Debug.Log("Interact ignored due to debounce");
             return;
         }
+
         lastInteractionTime = Time.time;
 
         Debug.Log("Interact pressed");
-        if (curTile == null) return;
-        var tile = curTile.GetComponent<FarmTileControl>();
-        if (tile == null) return;
 
-        // consume stamina for every interaction
+        if (curTile == null)
+            return;
+
+        var tile = curTile.GetComponent<FarmTileControl>();
+
+        if (tile == null)
+            return;
+
+        // Consume stamina
         if (stamina != null)
         {
             if (!stamina.TryConsume(stamina.waterDrainAmount))
             {
-                Debug.Log("Not enough stamina to perform action.");
+                Debug.Log(
+                    "Not enough stamina to perform action."
+                );
                 return;
             }
         }
 
-        // perform the interaction
+        // Interact with the farm tile
         tile.InteractWithFarmTile();
-        // notify listeners that the interaction finished and the tile state may have changed
+
         AfterTileInteracted?.Invoke(curTile);
-        // trigger character interaction animation if available
+
+        // Trigger interaction animation
         try
         {
             if (animator != null)
@@ -104,44 +147,91 @@ public class PlayerInteractPoint:MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            Debug.LogWarning("PlayerInteractPoint: failed to set InteractTrigger on animator: " + ex.Message);
+            Debug.LogWarning(
+                "PlayerInteractPoint: failed to set " +
+                "InteractTrigger on animator: " +
+                ex.Message
+            );
         }
     }
 
     private void Update()
     {
-        // Use the Input System keyboard for legacy key fallbacks (no direct use of UnityEngine.Input)
         var keyboard = Keyboard.current;
+
         if (keyboard != null)
         {
             if (keyboard.spaceKey.wasPressedThisFrame)
+            {
                 PerformInteraction();
+            }
+
             if (keyboard.eKey.wasPressedThisFrame)
+            {
                 PerformInteraction();
+            }
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.tag.Contains("Farm Tile"))
+        if (other.gameObject.tag.Contains("Farm Tile"))
         {
-            Debug.Log("Player is interacting with Tile " + other.name);
-            other.GetComponent<FarmTileControl>().EnterTile();//call the tile object's public API to interact with it
-            curTile = other.gameObject;//store which Tile the player is interacting with
+            Debug.Log(
+                "Player is interacting with Tile " +
+                other.name
+            );
+
+            FarmTileControl tile =
+                other.GetComponent<FarmTileControl>();
+
+            if (tile != null)
+            {
+                tile.EnterTile();
+            }
+
+            // Remember the tile the player entered
+            curTile = other.gameObject;
         }
     }
+
     private void OnTriggerExit(Collider other)
     {
         if (other.gameObject.tag.Contains("Farm Tile"))
         {
-            Debug.Log("Player is leaving Tile " + other.name);
-            other.GetComponent<FarmTileControl>().ExitTile();
+            Debug.Log(
+                "Player is leaving Tile " +
+                other.name
+            );
+
+            FarmTileControl tile =
+                other.GetComponent<FarmTileControl>();
+
+            if (tile != null)
+            {
+                tile.ExitTile();
+            }
+
+            // FIX: Stop remembering a tile after leaving it
+            if (curTile == other.gameObject)
+            {
+                curTile = null;
+            }
         }
     }
 
-    // Provide read-only access to the current tile the player is standing on
+    // Return the currently detected farm tile
     public GameObject GetCurrentTile()
     {
         return curTile;
+    }
+
+    private void OnDestroy()
+    {
+        // Clean up the input event subscription
+        if (interactAction != null)
+        {
+            interactAction.performed -= OnTileInteractPerformed;
+        }
     }
 }

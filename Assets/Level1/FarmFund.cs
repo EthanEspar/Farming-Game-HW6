@@ -50,6 +50,10 @@ public class FarmFund : MonoBehaviour
         Instance = this;
         Money = startingMoney;
 
+        // TEMPORARY: Seeds for testing
+        Seeds = 5;
+        SecondPlantSeeds = 5;
+
         DontDestroyOnLoad(gameObject);
     }
 

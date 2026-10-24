@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d39f63750aa855b44999f5e2ca6298a6, type: 3}
+  m_Name: CornPlantData
+  m_EditorClassIdentifier: Assembly-CSharp::PlantData
+  plantName: Corn
+  plantPrefab: {fileID: 8337984136796540636, guid: 339c9f977257a1f4d9ec43d93f4efad4, type: 3}
+  daysToMid: 2
+  daysToLarge: 4
+  growingSeason: 1
+  seedCost: 1

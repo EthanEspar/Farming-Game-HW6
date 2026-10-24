@@ -1,56 +1,86 @@
+
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+// A configurable plant type and its corresponding seed.
+[System.Serializable]
+public class PlantOption
+{
+    public PlantData plantData;
+    public FarmInventoryItemId seedItem;
+}
+
 public class plantManager : MonoBehaviour
 {
-    [Tooltip("Plant prefab to spawn (parent object with three stage models as children)")]
+    [Header("Plant Types")]
+    public PlantOption[] plantOptions;
+
+    [Tooltip("Legacy plant prefab (kept for compatibility)")]
     public GameObject plantPrefab;
 
-    [Tooltip("Key to press to plant (while standing on a watered tile). Uses the new Input System Key enum")]
+    [Tooltip("Key to press to plant")]
     public Key plantKey = Key.E;
 
-    [Tooltip("Spawn offset relative to the tile position (X/Z horizontal offset)")]
+    [Tooltip("Spawn offset relative to the tile")]
     public Vector3 spawnOffset = Vector3.zero;
 
-    [Tooltip("Additional height above the tile to spawn the plant")]
+    [Tooltip("Additional height above the tile")]
     public float spawnHeight = 0.05f;
 
-    [Tooltip("Show on-screen spawn offset tuning menu during Play mode")]
+    [Tooltip("Show spawn adjustment menu")]
     public bool showSpawnMenu = true;
 
     private PlayerInteractPoint playerInteractPoint;
     private seedCounter seedCounter;
-
-    private bool plantingAllowed = true;
     private DayNightControl dayNightControl;
     private TimeDisplayUI timeDisplay;
+
+    private bool plantingAllowed = true;
+
     private Rect spawnMenuRect = new Rect(10, 10, 220, 160);
 
     void Start()
     {
         playerInteractPoint = FindObjectOfType<PlayerInteractPoint>();
-        if (playerInteractPoint == null)
-            Debug.LogWarning("plantManager: PlayerInteractPoint not found in scene.");
-        if (plantPrefab == null)
-            Debug.LogWarning("plantManager: plantPrefab is not assigned.");
-        seedCounter = FindObjectOfType<seedCounter>();
-        if (seedCounter == null)
-            Debug.LogWarning("plantManager: seedCounter not found in scene. Planting won't decrement seeds.");
 
-        // HW6 Task 1: listen to the "new season" event so planting is locked during Winter
-        dayNightControl = GameObject.Find("DayNightController")?.GetComponent<DayNightControl>();
+        if (playerInteractPoint == null)
+            Debug.LogWarning("plantManager: PlayerInteractPoint not found.");
+
+        if (plantOptions == null || plantOptions.Length == 0)
+            Debug.LogWarning("plantManager: No Plant Options configured.");
+
+        seedCounter = FindObjectOfType<seedCounter>();
+
+        if (seedCounter == null)
+            Debug.LogWarning("plantManager: seedCounter not found.");
+
+        dayNightControl = GameObject.Find("DayNightController")
+            ?.GetComponent<DayNightControl>();
+
         if (dayNightControl != null)
         {
             dayNightControl.newSeasonEvent.AddListener(OnNewSeason);
-            plantingAllowed = dayNightControl.GetSeason() != DayNightControl.Season.Winter;
+
+            plantingAllowed =
+                dayNightControl.GetSeason() !=
+                DayNightControl.Season.Winter;
         }
+
         timeDisplay = FindAnyObjectByType<TimeDisplayUI>();
     }
 
     private void OnNewSeason(DayNightControl.Season newSeason)
     {
-        plantingAllowed = newSeason != DayNightControl.Season.Winter;
-        Debug.Log("plantManager: season is now " + newSeason + ", planting allowed = " + plantingAllowed);
+        plantingAllowed =
+            newSeason != DayNightControl.Season.Winter;
+
+        Debug.Log(
+            "plantManager: season is now " +
+            newSeason +
+            ", planting allowed = " +
+            plantingAllowed
+        );
     }
 
     private void OnDestroy()
@@ -61,181 +91,328 @@ public class plantManager : MonoBehaviour
 
     void Update()
     {
-        var k = Keyboard.current;
-        if (k == null) return;
+        var keyboard = Keyboard.current;
 
-        // guard against invalid key
-        if (plantKey == Key.None) return;
+        if (keyboard == null || plantKey == Key.None)
+            return;
 
-        if (k[plantKey].wasPressedThisFrame)
-        {
+        if (keyboard[plantKey].wasPressedThisFrame)
             TryPlantAtPlayerTile();
-        }
     }
+
     void OnGUI()
     {
-        if (!Application.isPlaying) return;
-        if (!showSpawnMenu) return;
+        if (!Application.isPlaying || !showSpawnMenu)
+            return;
 
-        spawnMenuRect = GUI.Window(123456, spawnMenuRect, SpawnMenuWindow, "Plant Spawn Adjust");
+        spawnMenuRect = GUI.Window(
+            123456,
+            spawnMenuRect,
+            SpawnMenuWindow,
+            "Plant Spawn Adjust"
+        );
     }
 
     private void SpawnMenuWindow(int id)
     {
         GUILayout.BeginVertical();
+
         GUILayout.Label($"Offset X: {spawnOffset.x:F2}");
+
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("-X", GUILayout.Width(50))) spawnOffset.x -= 0.1f;
-        if (GUILayout.Button("+X", GUILayout.Width(50))) spawnOffset.x += 0.1f;
+
+        if (GUILayout.Button("-X", GUILayout.Width(50)))
+            spawnOffset.x -= 0.1f;
+
+        if (GUILayout.Button("+X", GUILayout.Width(50)))
+            spawnOffset.x += 0.1f;
+
         GUILayout.EndHorizontal();
 
         GUILayout.Label($"Offset Z: {spawnOffset.z:F2}");
+
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("-Z", GUILayout.Width(50))) spawnOffset.z -= 0.1f;
-        if (GUILayout.Button("+Z", GUILayout.Width(50))) spawnOffset.z += 0.1f;
+
+        if (GUILayout.Button("-Z", GUILayout.Width(50)))
+            spawnOffset.z -= 0.1f;
+
+        if (GUILayout.Button("+Z", GUILayout.Width(50)))
+            spawnOffset.z += 0.1f;
+
         GUILayout.EndHorizontal();
 
         GUILayout.Label($"Height: {spawnHeight:F2}");
+
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("-Y", GUILayout.Width(50))) spawnHeight -= 0.01f;
-        if (GUILayout.Button("+Y", GUILayout.Width(50))) spawnHeight += 0.01f;
+
+        if (GUILayout.Button("-Y", GUILayout.Width(50)))
+            spawnHeight -= 0.01f;
+
+        if (GUILayout.Button("+Y", GUILayout.Width(50)))
+            spawnHeight += 0.01f;
+
         GUILayout.EndHorizontal();
 
         GUILayout.Space(6);
-        if (GUILayout.Button("Reset", GUILayout.Height(22))) { spawnOffset = Vector3.zero; spawnHeight = 0.05f; }
+
+        if (GUILayout.Button("Reset", GUILayout.Height(22)))
+        {
+            spawnOffset = Vector3.zero;
+            spawnHeight = 0.05f;
+        }
+
         GUILayout.EndVertical();
+
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }
 
-    // Visualize spawn position for the current tile in the Scene/Game view
     void OnDrawGizmos()
     {
-        if (!Application.isPlaying) return;
-        if (playerInteractPoint == null) playerInteractPoint = FindObjectOfType<PlayerInteractPoint>();
-        if (playerInteractPoint == null) return;
+        if (!Application.isPlaying)
+            return;
+
+        if (playerInteractPoint == null)
+            playerInteractPoint = FindObjectOfType<PlayerInteractPoint>();
+
+        if (playerInteractPoint == null)
+            return;
+
         GameObject curTile = playerInteractPoint.GetCurrentTile();
-        if (curTile == null) return;
+
+        if (curTile == null)
+            return;
+
         Vector3 spawnPos = curTile.transform.position + spawnOffset;
         spawnPos.y += spawnHeight;
+
         Gizmos.color = Color.green;
         Gizmos.DrawSphere(spawnPos, 0.05f);
-        Gizmos.DrawLine(curTile.transform.position + Vector3.up * 0.01f, spawnPos);
+
+        Gizmos.DrawLine(
+            curTile.transform.position + Vector3.up * 0.01f,
+            spawnPos
+        );
     }
 
     private void TryPlantAtPlayerTile()
     {
-        if (playerInteractPoint == null || plantPrefab == null) return;
+        if (playerInteractPoint == null)
+            return;
+
         GameObject curTile = playerInteractPoint.GetCurrentTile();
-        if (curTile == null) return;
+
+        if (curTile == null)
+            return;
 
         FarmTileControl ft = curTile.GetComponent<FarmTileControl>();
-        if (ft == null) return;
 
-        Plant[] existing = FindObjectsByType<Plant>(FindObjectsSortMode.None);
+        if (ft == null)
+            return;
+
+        // Check for an existing plant on this tile.
+        Plant[] existing =
+            FindObjectsByType<Plant>(FindObjectsSortMode.None);
 
         foreach (Plant plant in existing)
         {
-            if (plant != null && plant.plantedTile == curTile)
+            if (plant == null || plant.plantedTile != curTile)
+                continue;
+
+            // Harvesting requires the scythe in Scene 5+.
+            if (
+                Scene5InventoryHotbar.ToolRulesActiveInScene5 &&
+                Scene5InventoryHotbar.SelectedSlotOneBased != 3
+            )
             {
-                // Scene 5 tool rules: only slot 3 can harvest.
-                if (Scene5InventoryHotbar.ToolRulesActiveInScene5 && Scene5InventoryHotbar.SelectedSlotOneBased != 3)
-                {
-                    Debug.Log("Scene5 rule: select slot 3 (Scythe) to harvest crops.");
-                    return;
-                }
-
-                if (!plant.IsMature)
-                {
-                    Debug.Log("The plant is not ready to harvest.");
-                    return;
-                }
-
-                if (FarmFund.Instance == null)
-                {
-                    Debug.LogError("Farm Fund is missing.");
-                    return;
-                }
-
-                FarmFund.Instance.AddHarvestedPlant();
-
-                Debug.Log(
-                    "Plant harvested! Total harvested: " +
-                    FarmFund.Instance.HarvestedPlants
-                );
-                Destroy(plant.gameObject);
+                Debug.Log("Select slot 3 (Scythe) to harvest.");
                 return;
             }
+
+            if (!plant.IsMature)
+            {
+                Debug.Log("The plant is not ready to harvest.");
+                return;
+            }
+
+            if (FarmFund.Instance == null)
+            {
+                Debug.LogError("Farm Fund is missing.");
+                return;
+            }
+
+            // Existing shared harvest counter.
+            FarmFund.Instance.AddHarvestedPlant();
+
+            Debug.Log(
+                "Plant harvested! Total harvested: " +
+                FarmFund.Instance.HarvestedPlants
+            );
+
+            Destroy(plant.gameObject);
+            return;
         }
 
-        // only allow planting on Watered tiles
+        // Only plant on watered tiles.
         if (ft.tileCond != FarmTileControl.FarmTileCond.Watered)
         {
             Debug.Log("Cannot plant here. Tile is not watered.");
             return;
         }
 
+        // Keep the existing winter restriction.
         if (!plantingAllowed)
         {
             Debug.Log("Cannot plant during Winter.");
-            if (timeDisplay != null) timeDisplay.ShowMessage("It's Winter - nothing can be planted until Spring.");
+
+            if (timeDisplay != null)
+            {
+                timeDisplay.ShowMessage(
+                    "It's Winter - nothing can be planted until Spring."
+                );
+            }
+
             return;
         }
 
-        // Scene 5 tool rules: only slot 4 can plant seeds.
-        if (Scene5InventoryHotbar.ToolRulesActiveInScene5 && Scene5InventoryHotbar.SelectedSlotOneBased != 4)
+        // Planting requires the seed slot in Scene 5+.
+        if (
+            Scene5InventoryHotbar.ToolRulesActiveInScene5 &&
+            Scene5InventoryHotbar.SelectedSlotOneBased != 4
+        )
         {
-            Debug.Log("Scene5 rule: select slot 4 (Seeds) to plant.");
+            Debug.Log("Select slot 4 (Seeds) to plant.");
             return;
         }
 
-        // ensure player has seeds
-        bool usedSeed;
+        if (FarmFund.Instance == null)
+        {
+            Debug.LogError("Farm Fund is missing.");
+            return;
+        }
+
+        if (dayNightControl == null)
+        {
+            Debug.LogWarning("DayNightController is missing.");
+            return;
+        }
+
+        DayNightControl.Season currentSeason =
+            dayNightControl.GetSeason();
+
+        PlantData selectedPlantData = null;
+        FarmInventoryItemId selectedSeedItem = default;
+        bool foundSeed = false;
+
+        // Search configured plants for one that grows this season
+        // and has an available seed.
+        if (plantOptions != null)
+        {
+            foreach (PlantOption option in plantOptions)
+            {
+                if (option == null || option.plantData == null)
+                    continue;
+
+                PlantData data = option.plantData;
+
+                if (data.plantPrefab == null)
+                    continue;
+
+                if (data.growingSeason != currentSeason)
+                    continue;
+
+                // Only seed inventory items can be used to plant.
+                if (
+                    option.seedItem != FarmInventoryItemId.FirstPlantSeed &&
+                    option.seedItem != FarmInventoryItemId.SecondPlantSeed
+                )
+                    continue;
+
+                if (FarmFund.Instance.GetItemCount(option.seedItem) <= 0)
+                    continue;
+
+                selectedPlantData = data;
+                selectedSeedItem = option.seedItem;
+                foundSeed = true;
+                break;
+            }
+        }
+
+        if (!foundSeed || selectedPlantData == null)
+        {
+            Debug.Log("No seeds available for the current season.");
+
+            if (timeDisplay != null)
+            {
+                timeDisplay.ShowMessage(
+                    "No seeds available for this season."
+                );
+            }
+
+            return;
+        }
+
+        // Consume one seed of the selected type.
+        if (!FarmFund.Instance.TryRemoveItem(selectedSeedItem))
+        {
+            Debug.Log("Failed to consume the selected seed.");
+            return;
+        }
+
+        // Update the seed counter UI.
         if (seedCounter != null)
         {
-            if (FarmFund.Instance == null)
-            {
-                Debug.LogError("Farm Fund is missing.");
-                return;
-            }
-
-            // Use any seed from the persistent global seed bank (wheat first, then corn)
-            usedSeed = FarmFund.Instance.TryUseAnySeed();
-
-            // keep seed UI synced
-            seedCounter.SendMessage("UpdateSeedUI", SendMessageOptions.DontRequireReceiver);
+            seedCounter.SendMessage(
+                "UpdateSeedUI",
+                SendMessageOptions.DontRequireReceiver
+            );
         }
-        else
+
+        // Find the visible center of the farm tile.
+        Vector3 spawnPos = curTile.transform.position;
+
+        Renderer tileRenderer = curTile.GetComponent<Renderer>();
+
+        if (tileRenderer == null)
         {
-            if (FarmFund.Instance == null)
-            {
-                Debug.LogError("Farm Fund is missing.");
-                return;
-            }
-
-            // fallback when the seedCounter UI is not present in this scene
-            usedSeed = FarmFund.Instance.TryUseAnySeed();
+            tileRenderer = curTile.GetComponentInChildren<Renderer>();
         }
 
-        if (!usedSeed)
+        if (tileRenderer != null)
         {
-            Debug.Log("No seeds left to plant.");
-            return;
+            spawnPos = tileRenderer.bounds.center;
+            spawnPos.y = tileRenderer.bounds.max.y;
         }
 
-        // spawn plant at tile position with offset and height
-        Vector3 spawnPos = curTile.transform.position + spawnOffset;
-        spawnPos.y += spawnHeight; // raise slightly so it sits on the tile
-        GameObject newPlant = Instantiate(plantPrefab, spawnPos, Quaternion.identity, this.transform);
-        // try to set plantedTile on Plant script
+        // Apply any optional adjustments.
+        spawnPos += spawnOffset;
+        spawnPos.y += spawnHeight;
+
+        // Spawn the selected plant's prefab.
+        GameObject newPlant = Instantiate(
+            selectedPlantData.plantPrefab,
+            spawnPos,
+            Quaternion.identity,
+            this.transform
+        );
+
         Plant plantComp = newPlant.GetComponent<Plant>();
+
         if (plantComp != null)
         {
+            plantComp.plantData = selectedPlantData;
             plantComp.plantedTile = curTile;
             plantComp.InitializeAsPlanted();
+
+            Debug.Log(
+                selectedPlantData.plantName +
+                " planted successfully!"
+            );
         }
         else
         {
-            Debug.LogWarning("Spawned plant prefab does not contain a Plant component.");
+            Debug.LogWarning(
+                "Spawned plant prefab does not contain a Plant component."
+            );
         }
     }
 }
