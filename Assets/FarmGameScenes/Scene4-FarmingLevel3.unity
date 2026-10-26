@@ -710,7 +710,7 @@ MonoBehaviour:
   toolOne: {fileID: 286883405}
   toolTwo: {fileID: 1916065782}
   toolThree: {fileID: 2147179086}
-  visibleDuration: 1
+  hotbarSlotBindings: []
   playerAnimator: {fileID: 0}
 --- !u!1001 &187820835
 PrefabInstance:
@@ -2409,11 +2409,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4000010819335194, guid: c26cacf51e485c54b95fdbf9ad976ddf, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.43054
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4000010819335194, guid: c26cacf51e485c54b95fdbf9ad976ddf, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -1.7390699
+      value: -1.80067
       objectReference: {fileID: 0}
     - target: {fileID: 4000010819335194, guid: c26cacf51e485c54b95fdbf9ad976ddf, type: 3}
       propertyPath: m_LocalRotation.w
@@ -5327,6 +5327,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77b9aad65e35ffa4fb036ed2f51aea3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Plant
+  plantData: {fileID: 0}
   smallModel: {fileID: 1811735818}
   midModel: {fileID: 2028340068}
   largeModel: {fileID: 1327695213}
@@ -5441,12 +5442,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17a996ff1793209489c3595c481fe39f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::plantManager
+  availablePlants: []
   plantPrefab: {fileID: 1935080188}
   plantKey: 19
   spawnOffset: {x: 0, y: 0, z: 1.8}
   spawnHeight: 0.5
   showSpawnMenu: 1
-  seedsReturnedPerHarvest: 1
 --- !u!4 &2008711133
 Transform:
   m_ObjectHideFlags: 0
