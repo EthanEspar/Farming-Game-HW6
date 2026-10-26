@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Events;
@@ -8,6 +9,13 @@ using UnityEngine.Events;
 // toolThree: appears when a fully grown plant is harvested (via FarmFund.harvestEvent or plantManager call)
 public class ToolInteractions : MonoBehaviour
 {
+    [System.Serializable]
+    public class SlotVisibilityBinding
+    {
+        [Range(1, 10)] public int slotNumber = 1;
+        public GameObject objectToShow;
+    }
+
     [Tooltip("Tool to show when a tile was tilled (first interaction)")]
     public GameObject toolOne;
 
@@ -16,6 +24,10 @@ public class ToolInteractions : MonoBehaviour
 
     [Tooltip("Tool to show when a fully grown crop is harvested")]
     public GameObject toolThree;
+
+    [Header("Optional drag-and-drop hotbar visibility")]
+    [Tooltip("If populated, these bindings control which object is shown for each selected hotbar slot in Scene 5.")]
+    public List<SlotVisibilityBinding> hotbarSlotBindings = new List<SlotVisibilityBinding>();
 
     private PlayerInteractPoint playerInteractPoint;
     private InputAction interactEAction;
@@ -105,10 +117,17 @@ public class ToolInteractions : MonoBehaviour
         if (Scene5InventoryHotbar.ToolRulesActiveInScene5)
         {
             int slot = Scene5InventoryHotbar.SelectedSlotOneBased;
-            if (slot == 1) SetToolVisibility(true, false, false);
-            else if (slot == 2) SetToolVisibility(false, true, false);
-            else if (slot == 3) SetToolVisibility(false, false, true);
-            else HideAllTools();
+            if (hotbarSlotBindings != null && hotbarSlotBindings.Count > 0)
+            {
+                ApplyBoundObjectVisibility(slot);
+            }
+            else
+            {
+                if (slot == 1) SetToolVisibility(true, false, false);
+                else if (slot == 2) SetToolVisibility(false, true, false);
+                else if (slot == 3) SetToolVisibility(false, false, true);
+                else HideAllTools();
+            }
         }
 
         // legacy E fallback (Input System keyboard)
@@ -191,5 +210,31 @@ public class ToolInteractions : MonoBehaviour
         if (toolOne != null) toolOne.SetActive(false);
         if (toolTwo != null) toolTwo.SetActive(false);
         if (toolThree != null) toolThree.SetActive(false);
+    }
+
+    private void ApplyBoundObjectVisibility(int selectedSlot)
+    {
+        // Hide default tools so only bound objects are shown when using custom bindings
+        HideAllTools();
+
+        // Hide all bound objects first
+        for (int i = 0; i < hotbarSlotBindings.Count; i++)
+        {
+            var binding = hotbarSlotBindings[i];
+            if (binding != null && binding.objectToShow != null)
+                binding.objectToShow.SetActive(false);
+        }
+
+        // Show the first matching bound object for this slot
+        for (int i = 0; i < hotbarSlotBindings.Count; i++)
+        {
+            var binding = hotbarSlotBindings[i];
+            if (binding == null || binding.objectToShow == null) continue;
+            if (binding.slotNumber == selectedSlot)
+            {
+                binding.objectToShow.SetActive(true);
+                break;
+            }
+        }
     }
 }

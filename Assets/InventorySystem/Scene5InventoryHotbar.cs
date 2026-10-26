@@ -37,8 +37,9 @@ public sealed class Scene5InventoryHotbar : MonoBehaviour
     {
         get
         {
-            Scene active = SceneManager.GetActiveScene();
-            return active.name == TargetSceneName && FindObjectOfType<Scene5InventoryHotbar>() != null;
+            // Enable tool-slot rules in any scene that has this hotbar component,
+            // not only Scene5. This allows Scene6 (or others) to reuse the same logic.
+            return FindObjectOfType<Scene5InventoryHotbar>() != null;
         }
     }
 
