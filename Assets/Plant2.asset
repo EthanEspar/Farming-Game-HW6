@@ -17,5 +17,5 @@ MonoBehaviour:
   plantingSeasons: 0100000002000000
   growSpeed: 0.88
   smallPlantPrefab: {fileID: 1000011580534764, guid: c26cacf51e485c54b95fdbf9ad976ddf, type: 3}
-  midPlantPrefab: {fileID: 1000010164499024, guid: f0666abddd74e5644ac4cf977d74e5e9, type: 3}
-  largePlantPrefab: {fileID: 1000011853396770, guid: becd827951d0b4046808ba97418ecf28, type: 3}
+  midPlantPrefab: {fileID: 1000013410243764, guid: 56b36da289d9a9e4cb37c5f588e23748, type: 3}
+  largePlantPrefab: {fileID: 1000012235373026, guid: 1c8776a0b36cd9a4f813bf0d2d59d109, type: 3}

@@ -26,5 +26,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/FarmGameScenes/Scene5-InventoryMerge.unity
     guid: 90dc734ce5d836a15ff7efedfa98a5b5
+  - enabled: 1
+    path: Assets/FarmGameScenes/Scene6-Corn-Level.unity
+    guid: 28a1f937400adcd4cb4ae0c4128e712b
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

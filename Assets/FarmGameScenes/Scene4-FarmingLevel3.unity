@@ -5444,8 +5444,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::plantManager
   availablePlants: []
   plantPrefab: {fileID: 1935080188}
+  wheatPlantData: {fileID: 11400000, guid: 891796d11ae54fe4fa744f48ad8ec2da, type: 2}
+  cornPlantData: {fileID: 11400000, guid: 3497707e7a864cf4481c5c16e1dccd97, type: 2}
   plantKey: 19
-  spawnOffset: {x: 0, y: 0, z: 1.8}
+  spawnOffset: {x: 0, y: -0.5, z: 1.8}
   spawnHeight: 0.5
   showSpawnMenu: 1
 --- !u!4 &2008711133

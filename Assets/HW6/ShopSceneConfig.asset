@@ -18,7 +18,8 @@ MonoBehaviour:
     nextSceneName: Scene3-Crop Sim
     continueButtonLabel: Go to Level 2
     instructions: Buy seeds before continuing to the farm.
-    announcement: The shop is using its fallback route because no matching entry scene was found.
+    announcement: The shop is using its fallback route because no matching entry
+      scene was found.
     showMarketPanel: 0
     showSpeedBootsOffer: 0
     showBagOffer: 0
@@ -47,7 +48,7 @@ MonoBehaviour:
     nextSceneName: Scene4-FarmingLevel3
     continueButtonLabel: Go to Level 3
     instructions: Sell crops, buy upgrades, and prepare for the next level.
-    announcement: New in the shop: Speed Boots!
+    announcement: 
     showMarketPanel: 1
     showSpeedBootsOffer: 1
     showBagOffer: 0
@@ -61,7 +62,7 @@ MonoBehaviour:
     nextSceneName: Scene5-InventoryMerge
     continueButtonLabel: Go to Inventory Level
     instructions: Buy the Bag to unlock the inventory level.
-    announcement: ''
+    announcement: 
     showMarketPanel: 1
     showSpeedBootsOffer: 0
     showBagOffer: 1
@@ -72,9 +73,10 @@ MonoBehaviour:
   - displayName: After Inventory Level
     entrySceneNames:
     - Scene5-InventoryMerge
-    nextSceneName: Scene5-InventoryMerge
-    continueButtonLabel: Replay Inventory Level
-    instructions: Sell harvested wheat, then buy at least 3 corn seeds for the next level.
+    nextSceneName: Scene6-Corn-Level
+    continueButtonLabel: Go To the Corn Level
+    instructions: Sell harvested wheat, then buy at least 3 corn seeds for the next
+      level.
     announcement: Corn seeds are now available for $3 each.
     showMarketPanel: 1
     showSpeedBootsOffer: 0

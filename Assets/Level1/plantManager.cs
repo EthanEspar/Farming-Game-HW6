@@ -10,6 +10,12 @@ public class plantManager : MonoBehaviour
     [Tooltip("Default plant prefab fallback if none is selected")]
     public GameObject plantPrefab;
 
+    [Header("Optional explicit crop mapping")]
+    [Tooltip("If assigned, used when planting from wheat seed slot (4).")]
+    public PlantData wheatPlantData;
+    [Tooltip("If assigned, used when planting from corn seed slot (6).")]
+    public PlantData cornPlantData;
+
     [Tooltip("Key to press to plant (while standing on a watered tile). Uses the new Input System Key enum")]
     public Key plantKey = Key.E;
 
