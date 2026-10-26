@@ -20,6 +20,9 @@ public class Plant : MonoBehaviour
     [HideInInspector]
     public GameObject plantedTile;
 
+    // Runtime-created stage children when spawning from ScriptableObject stage prefabs.
+    private bool builtFromPlantDataStages = false;
+
     private int daysPassedSincePlanting = 0;
     public bool IsMature
     {
@@ -91,8 +94,69 @@ public class Plant : MonoBehaviour
 
     public void InitializeAsPlanted()
     {
+        BuildStageModelsFromPlantDataIfNeeded();
+        EnsureStageModelsFromChildrenIfMissing();
         daysPassedSincePlanting = 0;
         SetStageSmall();
+    }
+
+    private void BuildStageModelsFromPlantDataIfNeeded()
+    {
+        if (builtFromPlantDataStages) return;
+        if (plantData == null) return;
+
+        // If the prefab already has stage children assigned, do not rebuild.
+        if (smallModel != null && midModel != null && largeModel != null)
+        {
+            builtFromPlantDataStages = true;
+            return;
+        }
+
+        // Build child stage objects from PlantData stage prefabs and align to root.
+        if (plantData.smallPlantPrefab != null)
+        {
+            smallModel = Instantiate(plantData.smallPlantPrefab, transform.position, transform.rotation, transform);
+            smallModel.transform.localPosition = Vector3.zero;
+            smallModel.transform.localRotation = Quaternion.identity;
+        }
+        if (plantData.midPlantPrefab != null)
+        {
+            midModel = Instantiate(plantData.midPlantPrefab, transform.position, transform.rotation, transform);
+            midModel.transform.localPosition = Vector3.zero;
+            midModel.transform.localRotation = Quaternion.identity;
+        }
+        if (plantData.largePlantPrefab != null)
+        {
+            largeModel = Instantiate(plantData.largePlantPrefab, transform.position, transform.rotation, transform);
+            largeModel.transform.localPosition = Vector3.zero;
+            largeModel.transform.localRotation = Quaternion.identity;
+        }
+
+        EnsureStageModelsFromChildrenIfMissing();
+        builtFromPlantDataStages = true;
+    }
+
+    private void EnsureStageModelsFromChildrenIfMissing()
+    {
+        // Hard fallback: if any stage reference is missing, auto-assign from existing children
+        // on the spawned plant root (works when plantPrefab already contains 3 stage children).
+        if (smallModel != null && midModel != null && largeModel != null) return;
+
+        int i = 0;
+        foreach (Transform t in transform)
+        {
+            if (i == 0 && smallModel == null) smallModel = t.gameObject;
+            else if (i == 1 && midModel == null) midModel = t.gameObject;
+            else if (i == 2 && largeModel == null) largeModel = t.gameObject;
+            i++;
+        }
+
+        if (smallModel == null)
+            Debug.LogWarning("Plant: missing small stage model on " + name);
+        if (midModel == null)
+            Debug.LogWarning("Plant: missing mid stage model on " + name);
+        if (largeModel == null)
+            Debug.LogWarning("Plant: missing large stage model on " + name);
     }
 
     private void OnDayPassed()

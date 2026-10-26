@@ -156,11 +156,12 @@ public sealed class Scene5InventoryHotbar : MonoBehaviour
         SetSlotVisual(2, "Scythe", tool3, showCount: false);
 
         // Seed + wheat inventory slots
-        SetSlotVisual(3, "Seeds", GetItemSprite(FarmInventoryItemId.FirstPlantSeed), showCount: true);
+        SetSlotVisual(3, "Wheat Seeds", GetItemSprite(FarmInventoryItemId.FirstPlantSeed), showCount: true);
         SetSlotVisual(4, "Wheat", GetItemSprite(FarmInventoryItemId.FirstPlantHarvest), showCount: true);
+        SetSlotVisual(5, "Corn Seeds", GetItemSprite(FarmInventoryItemId.SecondPlantSeed), showCount: true);
 
         // Remaining slots are reserved/empty
-        for (int i = 5; i < 10; i++)
+        for (int i = 6; i < 10; i++)
             SetSlotVisual(i, "Empty", null, showCount: false);
     }
 
@@ -299,18 +300,19 @@ public sealed class Scene5InventoryHotbar : MonoBehaviour
     private void RefreshCounts()
     {
         if (fund == null) return;
-        if (slots.Count < 5) return;
+        if (slots.Count < 6) return;
 
-        int totalSeeds = Mathf.Max(0, fund.Seeds + fund.SecondPlantSeeds);
+        int wheatSeeds = Mathf.Max(0, fund.Seeds);
         int wheat = Mathf.Max(0, fund.HarvestedPlants);
+        int cornSeeds = Mathf.Max(0, fund.SecondPlantSeeds);
 
-        // Slot 4 (index 3): show Seeds only when player has any seeds.
-        if (totalSeeds > 0)
+        // Slot 4 (index 3): show Wheat Seeds only when player has any.
+        if (wheatSeeds > 0)
         {
-            slots[3].label.text = "Seeds";
+            slots[3].label.text = "Wheat Seeds";
             slots[3].icon.sprite = GetItemSprite(FarmInventoryItemId.FirstPlantSeed);
             slots[3].icon.enabled = slots[3].icon.sprite != null;
-            slots[3].count.text = "x" + totalSeeds;
+            slots[3].count.text = "x" + wheatSeeds;
             slots[3].count.transform.parent.gameObject.SetActive(true);
         }
         else
@@ -334,6 +336,22 @@ public sealed class Scene5InventoryHotbar : MonoBehaviour
             slots[4].label.text = "Empty";
             slots[4].icon.enabled = false;
             slots[4].count.transform.parent.gameObject.SetActive(false);
+        }
+
+        // Slot 6 (index 5): show Corn Seeds only when player has any.
+        if (cornSeeds > 0)
+        {
+            slots[5].label.text = "Corn Seeds";
+            slots[5].icon.sprite = GetItemSprite(FarmInventoryItemId.SecondPlantSeed);
+            slots[5].icon.enabled = slots[5].icon.sprite != null;
+            slots[5].count.text = "x" + cornSeeds;
+            slots[5].count.transform.parent.gameObject.SetActive(true);
+        }
+        else
+        {
+            slots[5].label.text = "Empty";
+            slots[5].icon.enabled = false;
+            slots[5].count.transform.parent.gameObject.SetActive(false);
         }
     }
 

@@ -119,8 +119,7 @@ public class plantManager : MonoBehaviour
         if (playerInteractPoint == null) return;
         GameObject curTile = playerInteractPoint.GetCurrentTile();
         if (curTile == null) return;
-        Vector3 spawnPos = curTile.transform.position + spawnOffset;
-        spawnPos.y += spawnHeight;
+        Vector3 spawnPos = GetPlantSpawnPosition(curTile);
         Gizmos.color = Color.green;
         Gizmos.DrawSphere(spawnPos, 0.05f);
         Gizmos.DrawLine(curTile.transform.position + Vector3.up * 0.01f, spawnPos);
@@ -185,18 +184,43 @@ public class plantManager : MonoBehaviour
             return;
         }
 
-        // Scene 5 tool rules: only slot 4 can plant seeds.
-        if (Scene5InventoryHotbar.ToolRulesActiveInScene5 && Scene5InventoryHotbar.SelectedSlotOneBased != 4)
+        // Scene 5/6 tool rules: only slot 4 (wheat seed) or slot 6 (corn seed) can plant.
+        if (Scene5InventoryHotbar.ToolRulesActiveInScene5 &&
+            Scene5InventoryHotbar.SelectedSlotOneBased != 4 &&
+            Scene5InventoryHotbar.SelectedSlotOneBased != 6)
         {
-            Debug.Log("Scene5 rule: select slot 4 (Seeds) to plant.");
+            Debug.Log("Scene rule: select slot 4 (Wheat Seeds) or slot 6 (Corn Seeds) to plant.");
             return;
         }
 
-        // Determine which plant data to use based on current selection / inventory
+        // Determine which plant data to use based on selected hotbar seed slot
         PlantData selectedPlantData = GetActivePlantData();
-        GameObject prefabToSpawn = (selectedPlantData != null && selectedPlantData.smallPlantPrefab != null) 
-                                   ? selectedPlantData.smallPlantPrefab 
-                                   : plantPrefab;
+        if (selectedPlantData == null && plantPrefab != null)
+        {
+            // Fallback: use default PlantData configured on the root plant prefab.
+            Plant defaultPlant = plantPrefab.GetComponent<Plant>();
+            if (defaultPlant != null)
+                selectedPlantData = defaultPlant.plantData;
+        }
+
+        // Prevent "invisible" instant-destroy crops by validating season before spending seeds.
+        if (selectedPlantData != null && dayNightControl != null)
+        {
+            var season = dayNightControl.GetSeason();
+            if (!selectedPlantData.CanGrowInSeason(season))
+            {
+                Debug.Log("Cannot plant " + selectedPlantData.plantName + " in " + season + ".");
+                if (timeDisplay != null)
+                    timeDisplay.ShowMessage(selectedPlantData.plantName + " can't be planted in " + season + ".");
+                return;
+            }
+        }
+
+        // Always spawn the Plant root prefab so Plant.cs can manage staged growth visuals.
+        // (PlantData stage prefabs are attached by Plant at runtime.)
+        GameObject prefabToSpawn = plantPrefab;
+        if (prefabToSpawn == null && selectedPlantData != null)
+            prefabToSpawn = selectedPlantData.smallPlantPrefab;
 
         if (prefabToSpawn == null)
         {
@@ -204,7 +228,7 @@ public class plantManager : MonoBehaviour
             return;
         }
 
-        // ensure player has seeds
+        // ensure player has the selected seed type
         bool usedSeed;
         if (FarmFund.Instance == null)
         {
@@ -212,7 +236,19 @@ public class plantManager : MonoBehaviour
             return;
         }
 
-        usedSeed = FarmFund.Instance.TryUseAnySeed();
+        int selectedSlot = Scene5InventoryHotbar.SelectedSlotOneBased;
+        if (Scene5InventoryHotbar.ToolRulesActiveInScene5)
+        {
+            // Slot 4 -> wheat seed, Slot 6 -> corn seed
+            usedSeed = (selectedSlot == 6)
+                ? FarmFund.Instance.TryUseSecondPlantSeed()
+                : FarmFund.Instance.TryUseSeed();
+        }
+        else
+        {
+            usedSeed = FarmFund.Instance.TryUseAnySeed();
+        }
+
         if (seedCounter != null)
         {
             seedCounter.SendMessage("UpdateSeedUI", SendMessageOptions.DontRequireReceiver);
@@ -224,9 +260,8 @@ public class plantManager : MonoBehaviour
             return;
         }
 
-        // spawn plant at tile position with offset and height
-        Vector3 spawnPos = curTile.transform.position + spawnOffset;
-        spawnPos.y += spawnHeight; 
+        // spawn plant centered on the current tile (same logic for all crop types)
+        Vector3 spawnPos = GetPlantSpawnPosition(curTile);
         GameObject newPlant = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity, this.transform);
         
         // Setup plant component and pass the ScriptableObject reference
@@ -234,11 +269,37 @@ public class plantManager : MonoBehaviour
         if (plantComp != null)
         {
             plantComp.plantedTile = curTile;
-            
-            // If your Plant script has a reference field for PlantData, assign it here dynamically:
-            // plantComp.plantData = selectedPlantData;
+
+            // Assign selected plant data so growth/season logic and stage visuals come from the right crop type.
+            if (selectedPlantData != null)
+                plantComp.plantData = selectedPlantData;
+
+            // Growth timing by crop type:
+            // Wheat: mid at day 1, large at day 2
+            // Corn:  mid at day 2, large at day 4
+            bool isCorn = false;
+            if (Scene5InventoryHotbar.ToolRulesActiveInScene5)
+                isCorn = Scene5InventoryHotbar.SelectedSlotOneBased == 6;
+            else if (selectedPlantData != null && !string.IsNullOrEmpty(selectedPlantData.plantName))
+                isCorn = selectedPlantData.plantName.ToLower().Contains("corn");
+
+            if (isCorn)
+            {
+                plantComp.daysToMid = 2;
+                plantComp.daysToLarge = 4;
+            }
+            else
+            {
+                plantComp.daysToMid = 1;
+                plantComp.daysToLarge = 2;
+            }
 
             plantComp.InitializeAsPlanted();
+
+            if (plantComp.smallModel == null && plantComp.midModel == null && plantComp.largeModel == null)
+            {
+                Debug.LogWarning("plantManager: Plant spawned but has no stage models assigned/created. Assign availablePlants and PlantData stage prefabs.");
+            }
         }
         else
         {
@@ -251,19 +312,31 @@ public class plantManager : MonoBehaviour
     {
         if (availablePlants == null || availablePlants.Length == 0) return null;
 
-        // Example logic: Map active hotbar items or default to the first/second plant asset.
-        // If you have multiple seed types, you can check which seed is active here.
-        // For demonstration, if index 0 is corn and index 1 is tomato:
-        int index = 0; 
-        
-        // You can tie this index to your inventory system selection if applicable, e.g.:
-        // if (Scene5InventoryHotbar.SelectedSlotOneBased == 4) index = 0; // Corn
-        // else if (/* another condition */) index = 1; // Tomato
-
-        if (index < availablePlants.Length)
+        // Convention: availablePlants[0] = wheat/default plant, availablePlants[1] = corn/second plant
+        // Slot 6 (Corn Seeds) plants second plant when available.
+        if (Scene5InventoryHotbar.ToolRulesActiveInScene5 && Scene5InventoryHotbar.SelectedSlotOneBased == 6)
         {
-            return availablePlants[index];
+            if (availablePlants.Length > 1 && availablePlants[1] != null)
+                return availablePlants[1];
         }
+
         return availablePlants[0];
+    }
+
+    private Vector3 GetPlantSpawnPosition(GameObject tile)
+    {
+        Vector3 spawnPos = tile.transform.position;
+
+        Collider tileCollider = tile.GetComponent<Collider>();
+        if (tileCollider != null)
+        {
+            // center X/Z on the tile and place slightly above top surface
+            spawnPos = tileCollider.bounds.center;
+            spawnPos.y = tileCollider.bounds.max.y;
+        }
+
+        spawnPos += spawnOffset;
+        spawnPos.y += spawnHeight;
+        return spawnPos;
     }
 }
